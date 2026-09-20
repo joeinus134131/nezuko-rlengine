@@ -60,6 +60,7 @@ def trade(
 
     elif trade_mode == "paper_trading":
         # Alpaca is optional for users who only run training or backtests.
+        from finrl.integrations.alpaca import validate_alpaca_paper_connection
         from finrl.meta.env_stock_trading.env_stock_papertrading import (
             AlpacaPaperTrading,
         )
@@ -73,6 +74,12 @@ def trade(
             raise ValueError(
                 "state_dim and action_dim must be provided for paper trading."
             )
+
+        # Validate endpoint and credentials with a read-only request before the
+        # model starts its long-running loop or touches existing paper orders.
+        API_BASE_URL, _ = validate_alpaca_paper_connection(
+            API_KEY, API_SECRET, API_BASE_URL
+        )
 
         # initialize paper trading env
         paper_trading = AlpacaPaperTrading(

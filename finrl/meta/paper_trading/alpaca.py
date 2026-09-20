@@ -14,6 +14,7 @@ import torch
 
 from finrl.meta.data_processors.processor_alpaca import AlpacaProcessor
 from finrl.meta.paper_trading.common import AgentPPO
+from finrl.integrations.alpaca import normalize_alpaca_paper_url
 
 
 class PaperTradingAlpaca:
@@ -94,7 +95,9 @@ class PaperTradingAlpaca:
 
         # connect to Alpaca trading API
         try:
-            self.alpaca = tradeapi.REST(API_KEY, API_SECRET, API_BASE_URL, "v2")
+            self.alpaca = tradeapi.REST(
+                API_KEY, API_SECRET, normalize_alpaca_paper_url(API_BASE_URL), "v2"
+            )
         except:
             raise ValueError(
                 "Fail to connect Alpaca. Please check account info and internet connection."

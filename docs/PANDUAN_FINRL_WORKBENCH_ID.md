@@ -1146,8 +1146,15 @@ Kurangi ticker, gunakan data harian, pendekkan periode, atau kecilkan timesteps.
 
 ### Alpaca ditolak
 
-Periksa API key, secret, base URL paper, dan hak akses akun. Kredensial sumber
-data di sidebar terpisah dari kredensial formulir paper trading.
+Gunakan base URL `https://paper-api.alpaca.markets` **tanpa** `/v2`. Library
+Alpaca menambahkan `/v2` sendiri; memasukkannya pada base URL akan menghasilkan
+path salah seperti `/v2/v2/orders`. Dashboard sekarang menormalkan konfigurasi
+lama secara otomatis dan menyediakan tombol **Uji koneksi read-only**.
+
+Jika sesudah URL benar muncul `401/403 unauthorized`, pastikan key dan secret
+berasal dari akun **Paper**, bukan Live. Secret Alpaca biasanya hanya ditampilkan
+saat dibuat; buat ulang paper key bila secret tidak lagi diketahui. Kredensial
+sumber data di sidebar terpisah dari kredensial formulir paper trading.
 
 ## 15. Batasan
 

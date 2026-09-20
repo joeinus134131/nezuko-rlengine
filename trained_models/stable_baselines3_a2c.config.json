@@ -1,30 +1,27 @@
 {
   "tickers": [
-    "ADRO.JK",
-    "ANTM.JK",
-    "BBCA.JK",
-    "BBNI.JK",
-    "BBRI.JK",
-    "BBTN.JK",
-    "BMRI.JK",
-    "JPFA.JK",
-    "PTBA.JK",
-    "TLKM.JK",
-    "WIKA.JK"
+    "NVDA",
+    "TSM",
+    "ASML"
   ],
   "data_source": "yahoofinance",
   "interval": "1D",
   "train_start": "2014-01-01",
-  "train_end": "2025-12-31",
-  "test_start": "2026-01-01",
+  "train_end": "2026-08-31",
+  "test_start": "2026-09-01",
   "test_end": "2026-12-31",
   "indicators": [
     "macd",
+    "boll_ub",
+    "boll_lb",
     "rsi_14",
     "rsi_30",
-    "cci_30"
+    "cci_30",
+    "dx_30",
+    "close_30_sma",
+    "close_60_sma"
   ],
-  "use_vix": false,
+  "use_vix": true,
   "drl_lib": "stable_baselines3",
   "model_name": "a2c",
   "model_path": "trained_models/stable_baselines3_a2c",
@@ -32,6 +29,6 @@
   "agent_params": {
     "learning_rate": 0.0003
   },
-  "universe": "LQ45 Indonesia",
+  "universe": "Custom global",
   "risk_free_rate": 0.06
 }

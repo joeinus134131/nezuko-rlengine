@@ -1544,6 +1544,9 @@ katakan bahwa analisis berita/fundamental terbaru tidak dapat disimpulkan.
 
 
 def show_paper_trading(config: ExperimentConfig) -> None:
+    from finrl.integrations.alpaca import PAPER_BASE_URL
+    from finrl.integrations.alpaca import normalize_alpaca_paper_url
+    from finrl.integrations.alpaca import validate_alpaca_paper_connection
     from finrl.integrations.secure_store import load_secret
     from finrl.integrations.secure_store import save_secret
 
@@ -1563,8 +1566,15 @@ def show_paper_trading(config: ExperimentConfig) -> None:
         return
     if not st.session_state.get("paper_profile_initialized"):
         profile = _read_json_config("paper_trading.json") or {}
+        stored_api_url = profile.get("api_url", PAPER_BASE_URL)
+        try:
+            stored_api_url = normalize_alpaca_paper_url(stored_api_url)
+        except ValueError:
+            # Keep an invalid custom value visible so the user can correct it;
+            # valid legacy values ending in /v2 are migrated in memory.
+            pass
         st.session_state.setdefault(
-            "paper_api_url", profile.get("api_url", "https://paper-api.alpaca.markets")
+            "paper_api_url", stored_api_url
         )
         st.session_state.setdefault(
             "paper_state_dim",
@@ -1583,7 +1593,10 @@ def show_paper_trading(config: ExperimentConfig) -> None:
     with st.form("paper-trading"):
         api_key = st.text_input("Alpaca API key", type="password", key="paper_api_key")
         api_secret = st.text_input("Alpaca API secret", type="password", key="paper_api_secret")
-        api_url = st.text_input("Alpaca paper base URL", key="paper_api_url")
+        api_url = st.text_input(
+            "Alpaca paper base URL", key="paper_api_url",
+            help=f"Gunakan {PAPER_BASE_URL} tanpa /v2; SDK menambahkan versi API sendiri.",
+        )
         state_dim = st.number_input("State dimension", min_value=1, key="paper_state_dim")
         action_dim = st.number_input("Action dimension", min_value=1, key="paper_action_dim")
         save_credentials = st.checkbox(
@@ -1591,13 +1604,15 @@ def show_paper_trading(config: ExperimentConfig) -> None:
         )
         confirmed = st.checkbox("Saya memahami bahwa ini akan membuat order paper-trading.")
         save_only = st.form_submit_button("Simpan konfigurasi")
+        test_connection = st.form_submit_button("Uji koneksi read-only")
         submitted = st.form_submit_button("Mulai paper trading", type="primary")
     if save_only:
         try:
+            normalized_api_url = normalize_alpaca_paper_url(api_url)
             path = _write_json_config(
                 "paper_trading.json",
                 {
-                    "api_url": api_url,
+                    "api_url": normalized_api_url,
                     "state_dim": int(state_dim),
                     "action_dim": int(action_dim),
                     "model_path": config.model_path,
@@ -1611,15 +1626,30 @@ def show_paper_trading(config: ExperimentConfig) -> None:
             st.success(f"Konfigurasi paper trading disimpan di {path}.")
         except Exception as error:
             st.error(f"Konfigurasi gagal disimpan: {error}")
+    if test_connection:
+        try:
+            normalized_api_url, account = validate_alpaca_paper_connection(
+                api_key, api_secret, api_url
+            )
+            account_status = getattr(account, "status", "terhubung")
+            st.success(
+                f"Koneksi read-only berhasil. Status account: {account_status}. "
+                f"Endpoint dinormalisasi menjadi {normalized_api_url}."
+            )
+        except PermissionError as error:
+            st.error(str(error))
+        except (ValueError, ConnectionError) as error:
+            st.error(str(error))
     if submitted:
         if not confirmed:
             st.error("Konfirmasi paper trading terlebih dahulu.")
             return
         try:
+            normalized_api_url = normalize_alpaca_paper_url(api_url)
             _write_json_config(
                 "paper_trading.json",
                 {
-                    "api_url": api_url,
+                    "api_url": normalized_api_url,
                     "state_dim": int(state_dim),
                     "action_dim": int(action_dim),
                     "model_path": config.model_path,
@@ -1635,10 +1665,14 @@ def show_paper_trading(config: ExperimentConfig) -> None:
                 trade(
                     config.test_start, config.test_end, config.tickers, config.data_source,
                     config.interval, config.indicators, config.drl_lib, StockTradingEnv,
-                    config.model_name, api_key, api_secret, api_url, "paper_trading",
+                    config.model_name, api_key, api_secret, normalized_api_url, "paper_trading",
                     config.use_vix, cwd=config.model_path, state_dim=int(state_dim),
                     action_dim=int(action_dim),
                 )
+        except PermissionError as error:
+            st.error(str(error))
+        except (ValueError, ConnectionError) as error:
+            st.error(str(error))
         except Exception as error:
             st.exception(error)
 
