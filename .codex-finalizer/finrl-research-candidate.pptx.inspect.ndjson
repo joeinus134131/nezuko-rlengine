@@ -1,0 +1,260 @@
+{"kind":"deck","id":"pr/183ze8","name":"Deck"}
+{"kind":"layout","layoutId":"4da262c9-7d5d-4e1e-b52c-f592b2dbe78e","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"338186e0-7cd6-45bb-946d-a6c4d04ecaae","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/ua8yux","slide":1,"title":"FINRL RESEARCH","textShapes":4}
+{"kind":"textbox","id":"sh/2183u507","slide":1,"text":"FINRL RESEARCH","textPreview":"FINRL RESEARCH","textChars":14,"textLines":1,"bbox":[42,28,260,20]}
+{"kind":"textbox","id":"sh/p4z25kji","slide":1,"text":"Riset kuantitatif\nemiten Indonesia","textPreview":"Riset kuantitatif | emiten Indonesia","textChars":34,"textLines":2,"bbox":[42,172,700,122]}
+{"kind":"textbox","id":"sh/43qlwfid","slide":1,"text":"Screening teknikal, risiko, dan evaluasi strategi deep reinforcement learning","textPreview":"Screening teknikal, risiko, dan evaluasi strategi deep reinforcement learning","textChars":77,"textLines":1,"bbox":[42,320,680,66]}
+{"kind":"textbox","id":"sh/rq1k7u1o","slide":1,"text":"Universe 11 emiten  |  Data harian  |  Laporan eksperimen","textPreview":"Universe 11 emiten  |  Data harian  |  Laporan eksperimen","textChars":57,"textLines":1,"bbox":[42,614,700,24]}
+{"kind":"image","id":"im/jmxobu1s","slide":1,"name":"","geometry":"roundRect","alt":"Perbandingan harga saham ternormalisasi","bbox":[820,0,460,720]}
+{"kind":"notes","id":"nt/ua8yux","slide":1,"text":"Sumber: hasil FinRL Workbench dan visualisasi yang diberikan pengguna. Angka merefleksikan konfigurasi serta periode pada tangkapan layar. Deck ini merupakan laporan riset, bukan rekomendasi investasi."}
+{"kind":"slide","id":"sl/hbturl","slide":2,"title":"FINRL RESEARCH","textShapes":19}
+{"kind":"textbox","id":"sh/7edszu94","slide":2,"text":"FINRL RESEARCH","textPreview":"FINRL RESEARCH","textChars":14,"textLines":1,"bbox":[42,22,400,18]}
+{"kind":"textbox","id":"sh/8fmt8zqp","slide":2,"text":"Ringkasan eksekutif","textPreview":"Ringkasan eksekutif","textChars":19,"textLines":1,"bbox":[42,48,1180,58]}
+{"kind":"shape","id":"sh/9gfa14ru","slide":2,"bbox":[42,112,1196,1]}
+{"kind":"textbox","id":"sh/uhoba98f","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1194,682,44,18]}
+{"kind":"textbox","id":"sh/vixs3e90","slide":2,"text":"Sinyal lintas saham mendukung seleksi kandidat, tetapi evaluasi strategi menunjukkan hasil yang berubah antarjendela uji.","textPreview":"Sinyal lintas saham mendukung seleksi kandidat, tetapi evaluasi strategi menunjukkan hasil yang berubah antarjendela uji.","textChars":121,"textLines":1,"bbox":[42,132,1190,70]}
+{"kind":"shape","id":"sh/wj6tcjql","slide":2,"bbox":[42,236,280,152]}
+{"kind":"textbox","id":"sh/hkfa5or6","slide":2,"text":"Emiten dianalisis","textPreview":"Emiten dianalisis","textChars":17,"textLines":1,"bbox":[60,252,244,24]}
+{"kind":"textbox","id":"sh/qlkry58b","slide":2,"text":"11","textPreview":"11","textChars":2,"textLines":1,"bbox":[60,283,244,55]}
+{"kind":"textbox","id":"sh/bmtsra9w","slide":2,"text":"LQ45 pilihan pengguna","textPreview":"LQ45 pilihan pengguna","textChars":21,"textLines":1,"bbox":[60,348,244,25]}
+{"kind":"shape","id":"sh/7m50nu1o","slide":2,"bbox":[342,236,280,152]}
+{"kind":"textbox","id":"sh/6lwje903","slide":2,"text":"Advancers","textPreview":"Advancers","textChars":9,"textLines":1,"bbox":[360,252,244,24]}
+{"kind":"textbox","id":"sh/ton2p4je","slide":2,"text":"45,5%","textPreview":"45,5%","textChars":5,"textLines":1,"bbox":[360,283,244,55]}
+{"kind":"textbox","id":"sh/8ne1gzi9","slide":2,"text":"Breadth belum dominan","textPreview":"Breadth belum dominan","textChars":21,"textLines":1,"bbox":[360,348,244,25]}
+{"kind":"shape","id":"sh/jil0ju1c","slide":2,"bbox":[642,236,280,152]}
+{"kind":"textbox","id":"sh/yhcjap0r","slide":2,"text":"Skor tertinggi","textPreview":"Skor tertinggi","textChars":14,"textLines":1,"bbox":[660,252,244,24]}
+{"kind":"textbox","id":"sh/lknil4ji","slide":2,"text":"78,18","textPreview":"78,18","textChars":5,"textLines":1,"bbox":[660,283,244,55]}
+{"kind":"textbox","id":"sh/kju1czix","slide":2,"text":"ADRO.JK","textPreview":"ADRO.JK","textChars":7,"textLines":1,"bbox":[660,348,244,25]}
+{"kind":"shape","id":"sh/bel0fa1g","slide":2,"bbox":[942,236,296,152]}
+{"kind":"textbox","id":"sh/atcj6p0v","slide":2,"text":"Hasil uji lemah","textPreview":"Hasil uji lemah","textChars":15,"textLines":1,"bbox":[960,252,260,24]}
+{"kind":"textbox","id":"sh/epsji54n","slide":2,"text":"−4,04%","textPreview":"−4,04%","textChars":6,"textLines":1,"bbox":[960,283,260,55]}
+{"kind":"textbox","id":"sh/zq1kral8","slide":2,"text":"Jendela evaluasi terbaru","textPreview":"Jendela evaluasi terbaru","textChars":24,"textLines":1,"bbox":[960,348,260,25]}
+{"kind":"textbox","id":"sh/0ra1kfmt","slide":2,"text":"Implikasi riset","textPreview":"Implikasi riset","textChars":15,"textLines":1,"bbox":[42,430,250,28]}
+{"kind":"textbox","id":"sh/1cj2tk3e","slide":2,"text":"Gunakan ranking sebagai prioritas riset, bukan sinyal beli tunggal. Stabilitas model perlu diuji lintas periode sebelum paper trading.","textPreview":"Gunakan ranking sebagai prioritas riset, bukan sinyal beli tunggal. Stabilitas model perlu diuji lintas periode sebelum paper trading.","textChars":134,"textLines":1,"bbox":[42,466,1120,78]}
+{"kind":"shape","id":"sh/mdcjmpkz","slide":2,"bbox":[42,580,1196,1]}
+{"kind":"textbox","id":"sh/nelkvul4","slide":2,"text":"Temuan utama: kualitas pemeringkatan emiten lebih konsisten daripada performa strategi A2C pada satu periode tertentu.","textPreview":"Temuan utama: kualitas pemeringkatan emiten lebih konsisten daripada performa strategi A2C pada satu periode tertentu.","textChars":118,"textLines":1,"bbox":[42,604,1180,42]}
+{"kind":"notes","id":"nt/hbturl","slide":2,"text":"Sumber: hasil FinRL Workbench dan visualisasi yang diberikan pengguna. Angka merefleksikan konfigurasi serta periode pada tangkapan layar. Skor 78,18 berasal dari tabel ranking. Hasil −4,04% berasal dari bukti kelayakan pada tangkapan layar terakhir."}
+{"kind":"slide","id":"sl/z3xcdc","slide":3,"title":"DESAIN EKSPERIMEN","textShapes":17}
+{"kind":"textbox","id":"sh/3e5sj65s","slide":3,"text":"DESAIN EKSPERIMEN","textPreview":"DESAIN EKSPERIMEN","textChars":17,"textLines":1,"bbox":[42,22,400,18]}
+{"kind":"textbox","id":"sh/ofytsb6d","slide":3,"text":"Ruang lingkup dan metodologi","textPreview":"Ruang lingkup dan metodologi","textChars":28,"textLines":1,"bbox":[42,48,1180,58]}
+{"kind":"shape","id":"sh/pg7algny","slide":3,"bbox":[42,112,1196,1]}
+{"kind":"textbox","id":"sh/e9wbm1ob","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1194,682,44,18]}
+{"kind":"textbox","id":"sh/fa5sf65w","slide":3,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[42,157,70,32]}
+{"kind":"textbox","id":"sh/gbetob6h","slide":3,"text":"Universe","textPreview":"Universe","textChars":8,"textLines":1,"bbox":[42,202,250,30]}
+{"kind":"shape","id":"sh/1cnahgnm","slide":3,"bbox":[42,244,250,1]}
+{"kind":"textbox","id":"sh/6lcri1oz","slide":3,"text":"ADRO, ANTM, BBCA, BBNI, BBRI, BBTN, BMRI, JPFA, PTBA, TLKM, WIKA","textPreview":"ADRO, ANTM, BBCA, BBNI, BBRI, BBTN, BMRI, JPFA, PTBA, TLKM, WIKA","textChars":64,"textLines":1,"bbox":[42,268,250,180]}
+{"kind":"textbox","id":"sh/rmlsbm5k","slide":3,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[348,157,70,32]}
+{"kind":"textbox","id":"sh/ja103y1o","slide":3,"text":"Data dan fitur","textPreview":"Data dan fitur","textChars":14,"textLines":1,"bbox":[348,202,250,30]}
+{"kind":"shape","id":"sh/i9szutk3","slide":3,"bbox":[348,244,250,1]}
+{"kind":"textbox","id":"sh/5c3i58ju","slide":3,"text":"Yahoo Finance, interval 1D. MACD, RSI 14, RSI 30, dan CCI 30 pada konfigurasi awal.","textPreview":"Yahoo Finance, interval 1D. MACD, RSI 14, RSI 30, dan CCI 30 pada konfigurasi awal.","textChars":83,"textLines":1,"bbox":[348,268,250,180]}
+{"kind":"textbox","id":"sh/4buhw329","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[654,157,70,32]}
+{"kind":"textbox","id":"sh/rel07y10","slide":3,"text":"Model","textPreview":"Model","textChars":5,"textLines":1,"bbox":[654,202,250,30]}
+{"kind":"shape","id":"sh/6dczydkf","slide":3,"bbox":[654,244,250,1]}
+{"kind":"textbox","id":"sh/t03i98jq","slide":3,"text":"Stable Baselines3, algoritma A2C. Contoh konfigurasi mencatat learning rate 0,0003.","textPreview":"Stable Baselines3, algoritma A2C. Contoh konfigurasi mencatat learning rate 0,0003.","textChars":83,"textLines":1,"bbox":[654,268,250,180]}
+{"kind":"textbox","id":"sh/szu1032l","slide":3,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[960,157,70,32]}
+{"kind":"textbox","id":"sh/7ih0velg","slide":3,"text":"Evaluasi","textPreview":"Evaluasi","textChars":8,"textLines":1,"bbox":[960,202,250,30]}
+{"kind":"shape","id":"sh/mh8zm9kb","slide":3,"bbox":[960,244,250,1]}
+{"kind":"textbox","id":"sh/a90bql8v","slide":3,"text":"Return, volatilitas, Sharpe, max drawdown, benchmark equal weight, dan pemeriksaan kelayakan.","textPreview":"Return, volatilitas, Sharpe, max drawdown, benchmark equal weight, dan pemeriksaan kelayakan.","textChars":93,"textLines":1,"bbox":[960,268,250,180]}
+{"kind":"textbox","id":"sh/ba9cj6pg","slide":3,"text":"Catatan periode","textPreview":"Catatan periode","textChars":15,"textLines":1,"bbox":[42,514,220,25]}
+{"kind":"textbox","id":"sh/wbitsbq1","slide":3,"text":"Tangkapan layar memuat beberapa konfigurasi train dan test yang berbeda. Karena itu, hasil backtest harus dibaca sebagai eksperimen terpisah, bukan satu seri performa yang sama.","textPreview":"Tangkapan layar memuat beberapa konfigurasi train dan test yang berbeda. Karena itu, hasil backtest harus dibaca sebagai eksperimen terpi...","textChars":177,"textLines":1,"bbox":[42,550,1160,72]}
+{"kind":"notes","id":"nt/z3xcdc","slide":3,"text":"Sumber: hasil FinRL Workbench dan visualisasi yang diberikan pengguna. Angka merefleksikan konfigurasi serta periode pada tangkapan layar. Periode yang terlihat mencakup train mulai 2014 dan beberapa test window 2024 sampai 2026, tergantung konfigurasi."}
+{"kind":"slide","id":"sl/7yyxpv","slide":4,"title":"SCREENING PASAR","textShapes":14}
+{"kind":"textbox","id":"sh/nuxkza5o","slide":4,"text":"SCREENING PASAR","textPreview":"SCREENING PASAR","textChars":15,"textLines":1,"bbox":[42,22,400,18]}
+{"kind":"textbox","id":"sh/8v61sfm9","slide":4,"text":"Breadth pasar menunjukkan kondisi campuran","textPreview":"Breadth pasar menunjukkan kondisi campuran","textChars":42,"textLines":1,"bbox":[42,48,1180,58]}
+{"kind":"shape","id":"sh/9gz21knu","slide":4,"bbox":[42,112,1196,1]}
+{"kind":"textbox","id":"sh/ypojml47","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1194,682,44,18]}
+{"kind":"shape","id":"sh/zqxkvq5s","slide":4,"bbox":[42,137,270,152]}
+{"kind":"textbox","id":"sh/0r61ovmd","slide":4,"text":"Advancers","textPreview":"Advancers","textChars":9,"textLines":1,"bbox":[60,153,234,24]}
+{"kind":"textbox","id":"sh/lsf2x0ny","slide":4,"text":"45,5%","textPreview":"45,5%","textChars":5,"textLines":1,"bbox":[60,184,234,55]}
+{"kind":"shape","id":"sh/ql4jil4b","slide":4,"bbox":[332,137,270,152]}
+{"kind":"textbox","id":"sh/bmd0rq5w","slide":4,"text":"Di atas SMA20","textPreview":"Di atas SMA20","textChars":13,"textLines":1,"bbox":[350,153,234,24]}
+{"kind":"textbox","id":"sh/32tkje94","slide":4,"text":"54,5%","textPreview":"54,5%","textChars":5,"textLines":1,"bbox":[350,184,234,55]}
+{"kind":"shape","id":"sh/i1kja9sj","slide":4,"bbox":[622,137,270,152]}
+{"kind":"textbox","id":"sh/5ob2loru","slide":4,"text":"Di atas SMA50","textPreview":"Di atas SMA50","textChars":13,"textLines":1,"bbox":[640,153,234,24]}
+{"kind":"textbox","id":"sh/432lcja9","slide":4,"text":"63,6%","textPreview":"63,6%","textChars":5,"textLines":1,"bbox":[640,184,234,55]}
+{"kind":"shape","id":"sh/rqtkny90","slide":4,"bbox":[912,137,326,152]}
+{"kind":"textbox","id":"sh/qpk3etsf","slide":4,"text":"Saham dianalisis","textPreview":"Saham dianalisis","textChars":16,"textLines":1,"bbox":[930,153,290,24]}
+{"kind":"textbox","id":"sh/dsb2p8r6","slide":4,"text":"11","textPreview":"11","textChars":2,"textLines":1,"bbox":[930,184,290,55]}
+{"kind":"textbox","id":"sh/7u9kbu9w","slide":4,"text":"Pembacaan","textPreview":"Pembacaan","textChars":9,"textLines":1,"bbox":[860,340,300,28]}
+{"kind":"textbox","id":"sh/6tgjipsb","slide":4,"text":"Lebih banyak saham berada di atas SMA50 daripada SMA20. Kombinasi ini konsisten dengan tren menengah yang masih lebih baik daripada momentum jangka pendek.","textPreview":"Lebih banyak saham berada di atas SMA50 daripada SMA20. Kombinasi ini konsisten dengan tren menengah yang masih lebih baik daripada momen...","textChars":155,"textLines":1,"bbox":[860,382,336,160]}
+{"kind":"textbox","id":"sh/aponqxcz","slide":4,"text":"Breadth 45,5% belum menunjukkan partisipasi kenaikan yang luas.","textPreview":"Breadth 45,5% belum menunjukkan partisipasi kenaikan yang luas.","textChars":63,"textLines":1,"bbox":[860,566,336,54]}
+{"kind":"image","id":"im/jm1ovuhc","slide":4,"name":"","geometry":"roundRect","alt":"Breadth historis: advancers dan persentase di atas SMA","bbox":[42,326,780,300]}
+{"kind":"notes","id":"nt/7yyxpv","slide":4,"text":"Sumber: hasil FinRL Workbench dan visualisasi yang diberikan pengguna. Angka merefleksikan konfigurasi serta periode pada tangkapan layar. Interpretasi teknikal berbasis persentase yang terlihat pada dashboard."}
+{"kind":"slide","id":"sl/2gionx","slide":5,"title":"RANKING EMITEN","textShapes":34}
+{"kind":"textbox","id":"sh/hwrqdk3m","slide":5,"text":"RANKING EMITEN","textPreview":"RANKING EMITEN","textChars":14,"textLines":1,"bbox":[42,22,400,18]}
+{"kind":"textbox","id":"sh/ut0r254b","slide":5,"text":"Lima emiten memimpin composite score","textPreview":"Lima emiten memimpin composite score","textChars":36,"textLines":1,"bbox":[42,48,1180,58]}
+{"kind":"shape","id":"sh/fu98balg","slide":5,"bbox":[42,112,1196,1]}
+{"kind":"textbox","id":"sh/4j298zmd","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1194,682,44,18]}
+{"kind":"textbox","id":"sh/pkbahk3y","slide":5,"text":"Peringkat","textPreview":"Peringkat","textChars":9,"textLines":1,"bbox":[42,145,100,20]}
+{"kind":"textbox","id":"sh/2x0r6p47","slide":5,"text":"Ticker","textPreview":"Ticker","textChars":6,"textLines":1,"bbox":[150,145,190,20]}
+{"kind":"textbox","id":"sh/3y98fuls","slide":5,"text":"Skor","textPreview":"Skor","textChars":4,"textLines":1,"bbox":[430,145,130,20]}
+{"kind":"textbox","id":"sh/cn29czm9","slide":5,"text":"Return 12 bln","textPreview":"Return 12 bln","textChars":13,"textLines":1,"bbox":[650,145,190,20]}
+{"kind":"textbox","id":"sh/dobal43u","slide":5,"text":"Max drawdown","textPreview":"Max drawdown","textChars":12,"textLines":1,"bbox":[940,145,200,20]}
+{"kind":"shape","id":"sh/t0z6hkv2","slide":5,"bbox":[42,177,1196,1]}
+{"kind":"textbox","id":"sh/szq58fuh","slide":5,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[42,195,80,32]}
+{"kind":"textbox","id":"sh/ryhofadw","slide":5,"text":"ADRO.JK","textPreview":"ADRO.JK","textChars":7,"textLines":1,"bbox":[150,195,190,32]}
+{"kind":"textbox","id":"sh/6d8n65cb","slide":5,"text":"78,18","textPreview":"78,18","textChars":5,"textLines":1,"bbox":[430,195,130,32]}
+{"kind":"textbox","id":"sh/14j6lkby","slide":5,"text":"+60,2%","textPreview":"+60,2%","textChars":6,"textLines":1,"bbox":[650,195,190,32]}
+{"kind":"textbox","id":"sh/g3q5czut","slide":5,"text":"−75,2%","textPreview":"−75,2%","textChars":6,"textLines":1,"bbox":[940,195,200,32]}
+{"kind":"shape","id":"sh/f2hojud8","slide":5,"bbox":[42,244,1196,1]}
+{"kind":"textbox","id":"sh/e18napcn","slide":5,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[42,270,80,32]}
+{"kind":"textbox","id":"sh/h8fm90vu","slide":5,"text":"BBRI.JK","textPreview":"BBRI.JK","textChars":7,"textLines":1,"bbox":[150,270,190,32]}
+{"kind":"textbox","id":"sh/w7650vu9","slide":5,"text":"69,70","textPreview":"69,70","textChars":5,"textLines":1,"bbox":[430,270,130,32]}
+{"kind":"textbox","id":"sh/8ra5gv25","slide":5,"text":"−20,8%","textPreview":"−20,8%","textChars":6,"textLines":1,"bbox":[650,270,190,32]}
+{"kind":"textbox","id":"sh/9sj6p03q","slide":5,"text":"−60,0%","textPreview":"−60,0%","textChars":6,"textLines":1,"bbox":[940,270,200,32]}
+{"kind":"shape","id":"sh/mp8nelkz","slide":5,"bbox":[42,319,1196,1]}
+{"kind":"textbox","id":"sh/nq1onqlk","slide":5,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[42,345,80,32]}
+{"kind":"textbox","id":"sh/wfa5kf2h","slide":5,"text":"PTBA.JK","textPreview":"PTBA.JK","textChars":7,"textLines":1,"bbox":[150,345,190,32]}
+{"kind":"textbox","id":"sh/xgj6tk3m","slide":5,"text":"67,73","textPreview":"67,73","textChars":5,"textLines":1,"bbox":[430,345,130,32]}
+{"kind":"textbox","id":"sh/adsni5kb","slide":5,"text":"+31,9%","textPreview":"+31,9%","textChars":6,"textLines":1,"bbox":[650,345,190,32]}
+{"kind":"textbox","id":"sh/ve1oralw","slide":5,"text":"−70,0%","textPreview":"−70,0%","textChars":6,"textLines":1,"bbox":[940,345,200,32]}
+{"kind":"shape","id":"sh/kju5of2d","slide":5,"bbox":[42,394,1196,1]}
+{"kind":"textbox","id":"sh/5k36xk3y","slide":5,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[42,420,80,32]}
+{"kind":"textbox","id":"sh/fe58ne50","slide":5,"text":"JPFA.JK","textPreview":"JPFA.JK","textChars":7,"textLines":1,"bbox":[150,420,190,32]}
+{"kind":"textbox","id":"sh/udwre94f","slide":5,"text":"64,24","textPreview":"64,24","textChars":5,"textLines":1,"bbox":[430,420,130,32]}
+{"kind":"textbox","id":"sh/hgnqpon6","slide":5,"text":"+22,2%","textPreview":"+22,2%","textChars":6,"textLines":1,"bbox":[650,420,190,32]}
+{"kind":"textbox","id":"sh/gfe9gjml","slide":5,"text":"−81,9%","textPreview":"−81,9%","textChars":6,"textLines":1,"bbox":[940,420,200,32]}
+{"kind":"shape","id":"sh/7a58je54","slide":5,"bbox":[42,469,1196,1]}
+{"kind":"textbox","id":"sh/69w7a94j","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[42,495,80,32]}
+{"kind":"textbox","id":"sh/tcnql4nu","slide":5,"text":"BBCA.JK","textPreview":"BBCA.JK","textChars":7,"textLines":1,"bbox":[150,495,190,32]}
+{"kind":"textbox","id":"sh/sbe9cjmp","slide":5,"text":"64,09","textPreview":"64,09","textChars":5,"textLines":1,"bbox":[430,495,130,32]}
+{"kind":"textbox","id":"sh/r6p8vy58","slide":5,"text":"−20,7%","textPreview":"−20,7%","textChars":6,"textLines":1,"bbox":[650,495,190,32]}
+{"kind":"textbox","id":"sh/q5grmt4n","slide":5,"text":"−55,5%","textPreview":"−55,5%","textChars":6,"textLines":1,"bbox":[940,495,200,32]}
+{"kind":"shape","id":"sh/ytwbqx0r","slide":5,"bbox":[42,544,1196,1]}
+{"kind":"textbox","id":"sh/zu5cj21c","slide":5,"text":"ADRO memimpin skor dan return 12 bulan. JPFA memiliki drawdown terdalam di kelompok lima besar, sehingga ranking tetap perlu dilengkapi batas risiko.","textPreview":"ADRO memimpin skor dan return 12 bulan. JPFA memiliki drawdown terdalam di kelompok lima besar, sehingga ranking tetap perlu dilengkapi b...","textChars":149,"textLines":1,"bbox":[42,598,1170,46]}
+{"kind":"notes","id":"nt/2gionx","slide":5,"text":"Sumber: hasil FinRL Workbench dan visualisasi yang diberikan pengguna. Angka merefleksikan konfigurasi serta periode pada tangkapan layar. Nilai dibaca dari tabel ranking pada screenshot. Persentase dibulatkan satu desimal pada slide."}
+{"kind":"slide","id":"sl/nam4gx","slide":6,"title":"PERFORMA HARGA","textShapes":7}
+{"kind":"textbox","id":"sh/bax47uxw","slide":6,"text":"PERFORMA HARGA","textPreview":"PERFORMA HARGA","textChars":14,"textLines":1,"bbox":[42,22,400,18]}
+{"kind":"textbox","id":"sh/wb65gzeh","slide":6,"text":"Performa jangka panjang terpisah antar-emiten","textPreview":"Performa jangka panjang terpisah antar-emiten","textChars":45,"textLines":1,"bbox":[42,48,1180,58]}
+{"kind":"shape","id":"sh/xcfm94f2","slide":6,"bbox":[42,112,1196,1]}
+{"kind":"textbox","id":"sh/yd8ni9wn","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1194,682,44,18]}
+{"kind":"textbox","id":"sh/kfq5kjet","slide":6,"text":"Pola yang terlihat","textPreview":"Pola yang terlihat","textChars":18,"textLines":1,"bbox":[920,151,270,26]}
+{"kind":"textbox","id":"sh/lgzmdofe","slide":6,"text":"BBCA dan BBRI sempat mencatat kenaikan relatif terbesar pada sebagian besar horizon. ADRO menunjukkan lonjakan siklikal yang tajam. JPFA dan PTBA bergerak lebih datar dengan fase volatilitas yang berbeda.","textPreview":"BBCA dan BBRI sempat mencatat kenaikan relatif terbesar pada sebagian besar horizon. ADRO menunjukkan lonjakan siklikal yang tajam. JPFA ...","textChars":204,"textLines":1,"bbox":[920,196,290,205]}
+{"kind":"textbox","id":"sh/eh4365wj","slide":6,"text":"Implikasi","textPreview":"Implikasi","textChars":9,"textLines":1,"bbox":[920,434,270,26]}
+{"kind":"textbox","id":"sh/fid4zax4","slide":6,"text":"Universe ini tidak homogen. Normalisasi harga membantu membandingkan lintasan, tetapi tidak menggantikan analisis return, volatilitas, dan likuiditas.","textPreview":"Universe ini tidak homogen. Normalisasi harga membantu membandingkan lintasan, tetapi tidak menggantikan analisis return, volatilitas, da...","textChars":150,"textLines":1,"bbox":[920,476,290,120]}
+{"kind":"image","id":"im/id03y90r","slide":6,"name":"","geometry":"roundRect","alt":"Harga ternormalisasi ADRO, BBCA, BBRI, JPFA, dan PTBA","bbox":[42,140,835,420]}
+{"kind":"notes","id":"nt/nam4gx","slide":6,"text":"Sumber: hasil FinRL Workbench dan visualisasi yang diberikan pengguna. Angka merefleksikan konfigurasi serta periode pada tangkapan layar. Grafik harga dinormalisasi sekitar 100 pada awal periode. Tanggal spesifik tidak tercantum lengkap pada gambar."}
+{"kind":"slide","id":"sl/wvatqd","slide":7,"title":"RISIKO EMITEN","textShapes":9}
+{"kind":"textbox","id":"sh/1cnq1kjm","slide":7,"text":"RISIKO EMITEN","textPreview":"RISIKO EMITEN","textChars":13,"textLines":1,"bbox":[42,22,400,18]}
+{"kind":"textbox","id":"sh/e9c7qp0b","slide":7,"text":"Drawdown besar muncul pada beberapa rezim pasar","textPreview":"Drawdown besar muncul pada beberapa rezim pasar","textChars":47,"textLines":1,"bbox":[42,48,1180,58]}
+{"kind":"shape","id":"sh/faloza1g","slide":7,"bbox":[42,112,1196,1]}
+{"kind":"textbox","id":"sh/s7upofi5","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1194,682,44,18]}
+{"kind":"shape","id":"sh/65c7m50z","slide":7,"bbox":[948,153,290,152]}
+{"kind":"textbox","id":"sh/r6lova1k","slide":7,"text":"Rentang max drawdown","textPreview":"Rentang max drawdown","textChars":20,"textLines":1,"bbox":[966,169,254,24]}
+{"kind":"textbox","id":"sh/c3yp0zi9","slide":7,"text":"−55% s.d. −82%","textPreview":"−55% s.d. −82%","textChars":14,"textLines":1,"bbox":[966,200,254,55]}
+{"kind":"textbox","id":"sh/d47q94ju","slide":7,"text":"Lima skor teratas","textPreview":"Lima skor teratas","textChars":17,"textLines":1,"bbox":[966,265,254,25]}
+{"kind":"textbox","id":"sh/9of6h0jm","slide":7,"text":"Drawdown historis berulang dan tidak pulih seragam antar-emiten. Risiko ekor tetap material meski composite score tinggi.","textPreview":"Drawdown historis berulang dan tidak pulih seragam antar-emiten. Risiko ekor tetap material meski composite score tinggi.","textChars":121,"textLines":1,"bbox":[948,345,275,120]}
+{"kind":"textbox","id":"sh/8n6pofih","slide":7,"text":"Fokus kontrol","textPreview":"Fokus kontrol","textChars":13,"textLines":1,"bbox":[948,495,275,26]}
+{"kind":"textbox","id":"sh/nmxofa1w","slide":7,"text":"Batas posisi, stop policy, dan evaluasi per rezim perlu diuji bersama model.","textPreview":"Batas posisi, stop policy, dan evaluasi per rezim perlu diuji bersama model.","textChars":76,"textLines":1,"bbox":[948,532,275,80]}
+{"kind":"image","id":"im/s7mx8jy9","slide":7,"name":"","geometry":"roundRect","alt":"Drawdown historis untuk emiten dalam universe","bbox":[42,142,870,410]}
+{"kind":"notes","id":"nt/wvatqd","slide":7,"text":"Sumber: hasil FinRL Workbench dan visualisasi yang diberikan pengguna. Angka merefleksikan konfigurasi serta periode pada tangkapan layar. Rentang max drawdown mengacu pada lima emiten teratas di tabel ranking."}
+{"kind":"slide","id":"sl/ky6rew","slide":8,"title":"WATCHLIST RISET","textShapes":16}
+{"kind":"textbox","id":"sh/qxs7yd4r","slide":8,"text":"WATCHLIST RISET","textPreview":"WATCHLIST RISET","textChars":15,"textLines":1,"bbox":[42,22,400,18]}
+{"kind":"textbox","id":"sh/dkjqt83i","slide":8,"text":"Prioritas riset berdasarkan sinyal teknikal","textPreview":"Prioritas riset berdasarkan sinyal teknikal","textChars":43,"textLines":1,"bbox":[42,48,1180,58]}
+{"kind":"shape","id":"sh/cjap0nmx","slide":8,"bbox":[42,112,1196,1]}
+{"kind":"textbox","id":"sh/zml8vil8","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1194,682,44,18]}
+{"kind":"shape","id":"sh/ylc72d4n","slide":8,"bbox":[42,145,560,196]}
+{"kind":"textbox","id":"sh/lo3qxs3e","slide":8,"text":"ADRO.JK","textPreview":"ADRO.JK","textChars":7,"textLines":1,"bbox":[64,165,240,30]}
+{"kind":"textbox","id":"sh/0nup4nmt","slide":8,"text":"Skor 78,18","textPreview":"Skor 78,18","textChars":10,"textLines":1,"bbox":[372,167,195,28]}
+{"kind":"textbox","id":"sh/nql8z2lk","slide":8,"text":"Return 12 bulan +60,2%. Tren kuat, drawdown historis tetap tinggi.","textPreview":"Return 12 bulan +60,2%. Tren kuat, drawdown historis tetap tinggi.","textChars":66,"textLines":1,"bbox":[64,222,510,86]}
+{"kind":"shape","id":"sh/mpc76x4z","slide":8,"bbox":[642,145,560,196]}
+{"kind":"textbox","id":"sh/cvi54j2t","slide":8,"text":"PTBA.JK","textPreview":"PTBA.JK","textChars":7,"textLines":1,"bbox":[664,165,240,30]}
+{"kind":"textbox","id":"sh/xwr6xo3e","slide":8,"text":"Skor 67,73","textPreview":"Skor 67,73","textChars":10,"textLines":1,"bbox":[972,167,195,28]}
+{"kind":"textbox","id":"sh/qtgn29k3","slide":8,"text":"Return 1 bulan +31,9% dan 3 bulan +27,1%. Momentum paling kuat pada tabel.","textPreview":"Return 1 bulan +31,9% dan 3 bulan +27,1%. Momentum paling kuat pada tabel.","textChars":74,"textLines":1,"bbox":[664,222,510,86]}
+{"kind":"shape","id":"sh/bupovel8","slide":8,"bbox":[42,380,560,196]}
+{"kind":"textbox","id":"sh/kzip8325","slide":8,"text":"BBRI.JK","textPreview":"BBRI.JK","textChars":7,"textLines":1,"bbox":[64,400,240,30]}
+{"kind":"textbox","id":"sh/l0r61o3q","slide":8,"text":"Skor 69,70","textPreview":"Skor 69,70","textChars":10,"textLines":1,"bbox":[372,402,195,28]}
+{"kind":"textbox","id":"sh/yx076tkz","slide":8,"text":"Skor tinggi, tetapi return 12 bulan −20,8%. Perlu konfirmasi perubahan tren.","textPreview":"Skor tinggi, tetapi return 12 bulan −20,8%. Perlu konfirmasi perubahan tren.","textChars":76,"textLines":1,"bbox":[64,457,510,86]}
+{"kind":"shape","id":"sh/zy9ozylk","slide":8,"bbox":[642,380,560,196]}
+{"kind":"textbox","id":"sh/8n2pc321","slide":8,"text":"JPFA.JK","textPreview":"JPFA.JK","textChars":7,"textLines":1,"bbox":[664,400,240,30]}
+{"kind":"textbox","id":"sh/9ob6583m","slide":8,"text":"Skor 64,24","textPreview":"Skor 64,24","textChars":10,"textLines":1,"bbox":[972,402,195,28]}
+{"kind":"textbox","id":"sh/hk76p8vq","slide":8,"text":"Return 3 bulan +22,8% dengan max drawdown −81,9%. Profil risiko agresif.","textPreview":"Return 3 bulan +22,8% dengan max drawdown −81,9%. Profil risiko agresif.","textChars":72,"textLines":1,"bbox":[664,457,510,86]}
+{"kind":"textbox","id":"sh/gjy5w3u5","slide":8,"text":"Watchlist ini mengatur urutan analisis lanjutan. Ia tidak memasukkan valuasi, kualitas laba, tata kelola, atau katalis korporasi.","textPreview":"Watchlist ini mengatur urutan analisis lanjutan. Ia tidak memasukkan valuasi, kualitas laba, tata kelola, atau katalis korporasi.","textChars":129,"textLines":1,"bbox":[42,630,1160,36]}
+{"kind":"notes","id":"nt/ky6rew","slide":8,"text":"Sumber: hasil FinRL Workbench dan visualisasi yang diberikan pengguna. Angka merefleksikan konfigurasi serta periode pada tangkapan layar. Watchlist disusun hanya dari tabel screening dan metrik teknikal yang diberikan pengguna."}
+{"kind":"slide","id":"sl/3e6lm4","slide":9,"title":"EVALUASI MODEL 2026","textShapes":17}
+{"kind":"textbox","id":"sh/jexo7i9g","slide":9,"text":"EVALUASI MODEL 2026","textPreview":"EVALUASI MODEL 2026","textChars":19,"textLines":1,"bbox":[42,22,400,18]}
+{"kind":"textbox","id":"sh/kf6p0nq1","slide":9,"text":"A2C menghasilkan return positif, tetapi tertinggal dari benchmark","textPreview":"A2C menghasilkan return positif, tetapi tertinggal dari benchmark","textChars":65,"textLines":1,"bbox":[42,48,1180,58]}
+{"kind":"shape","id":"sh/5gf698rm","slide":9,"bbox":[42,112,1196,1]}
+{"kind":"textbox","id":"sh/6ho72d87","slide":9,"text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1194,682,44,18]}
+{"kind":"shape","id":"sh/72xobi9s","slide":9,"bbox":[42,137,250,152]}
+{"kind":"textbox","id":"sh/s36p4nqx","slide":9,"text":"Return strategi","textPreview":"Return strategi","textChars":15,"textLines":1,"bbox":[60,153,214,24]}
+{"kind":"textbox","id":"sh/t4z6dsri","slide":9,"text":"12,75%","textPreview":"12,75%","textChars":6,"textLines":1,"bbox":[60,184,214,55]}
+{"kind":"textbox","id":"sh/u5876x83","slide":9,"text":"179 observasi","textPreview":"179 observasi","textChars":13,"textLines":1,"bbox":[60,249,214,25]}
+{"kind":"shape","id":"sh/f6hof29o","slide":9,"bbox":[312,137,250,152]}
+{"kind":"textbox","id":"sh/z65s32l8","slide":9,"text":"Max drawdown","textPreview":"Max drawdown","textChars":12,"textLines":1,"bbox":[330,153,214,24]}
+{"kind":"textbox","id":"sh/e5wrax4n","slide":9,"text":"−12,63%","textPreview":"−12,63%","textChars":7,"textLines":1,"bbox":[330,184,214,55]}
+{"kind":"shape","id":"sh/1s7a5c3e","slide":9,"bbox":[582,137,250,152]}
+{"kind":"textbox","id":"sh/07etc7mt","slide":9,"text":"Sharpe","textPreview":"Sharpe","textChars":6,"textLines":1,"bbox":[600,153,214,24]}
+{"kind":"textbox","id":"sh/r25sz2lc","slide":9,"text":"0,57","textPreview":"0,57","textChars":4,"textLines":1,"bbox":[600,184,214,55]}
+{"kind":"shape","id":"sh/q1wr6x4r","slide":9,"bbox":[852,137,386,152]}
+{"kind":"textbox","id":"sh/d4na1s3i","slide":9,"text":"Return benchmark","textPreview":"Return benchmark","textChars":16,"textLines":1,"bbox":[870,153,350,24]}
+{"kind":"textbox","id":"sh/c3e98nmx","slide":9,"text":"15,55%","textPreview":"15,55%","textChars":6,"textLines":1,"bbox":[870,184,350,55]}
+{"kind":"textbox","id":"sh/bypsbmlg","slide":9,"text":"Equal weight","textPreview":"Equal weight","textChars":12,"textLines":1,"bbox":[870,249,350,25]}
+{"kind":"textbox","id":"sh/6tkval43","slide":9,"text":"Trade-off","textPreview":"Trade-off","textChars":9,"textLines":1,"bbox":[864,346,310,28]}
+{"kind":"textbox","id":"sh/7utc3q5o","slide":9,"text":"Strategi AI mencatat volatilitas tahunan 24,72%, lebih rendah daripada benchmark 35,23%. Namun return dan Sharpe benchmark sedikit lebih tinggi pada jendela ini.","textPreview":"Strategi AI mencatat volatilitas tahunan 24,72%, lebih rendah daripada benchmark 35,23%. Namun return dan Sharpe benchmark sedikit lebih ...","textChars":161,"textLines":1,"bbox":[864,392,330,160]}
+{"kind":"textbox","id":"sh/8v2dcvm9","slide":9,"text":"Kesimpulan periode","textPreview":"Kesimpulan periode","textChars":18,"textLines":1,"bbox":[864,570,310,24]}
+{"kind":"textbox","id":"sh/twbe50nu","slide":9,"text":"Ada reduksi risiko, tetapi belum ada alpha yang jelas.","textPreview":"Ada reduksi risiko, tetapi belum ada alpha yang jelas.","textChars":54,"textLines":1,"bbox":[864,603,330,44]}
+{"kind":"image","id":"im/x8ralofq","slide":9,"name":"","geometry":"roundRect","alt":"Pertumbuhan nilai strategi AI dan benchmark equal weight","bbox":[42,330,780,286]}
+{"kind":"notes","id":"nt/3e6lm4","slide":9,"text":"Sumber: hasil FinRL Workbench dan visualisasi yang diberikan pengguna. Angka merefleksikan konfigurasi serta periode pada tangkapan layar. Angka berasal dari screenshot evaluasi model: strategi 12,747%, benchmark 15,545%, Sharpe 0,568 vs 0,586."}
+{"kind":"slide","id":"sl/x7pbee","slide":10,"title":"EVALUASI RISIKO MODEL","textShapes":9}
+{"kind":"textbox","id":"sh/tc761wz2","slide":10,"text":"EVALUASI RISIKO MODEL","textPreview":"EVALUASI RISIKO MODEL","textChars":21,"textLines":1,"bbox":[42,22,400,18]}
+{"kind":"textbox","id":"sh/69gnq1gr","slide":10,"text":"Profil drawdown AI lebih baik pada sebagian periode","textPreview":"Profil drawdown AI lebih baik pada sebagian periode","textChars":51,"textLines":1,"bbox":[42,48,1180,58]}
+{"kind":"shape","id":"sh/rapoz6hc","slide":10,"bbox":[42,112,1196,1]}
+{"kind":"textbox","id":"sh/k7y5oryl","slide":10,"text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1194,682,44,18]}
+{"kind":"textbox","id":"sh/i5wnmhgf","slide":10,"text":"Strategi AI","textPreview":"Strategi AI","textChars":11,"textLines":1,"bbox":[930,160,260,22]}
+{"kind":"textbox","id":"sh/j65ovmh0","slide":10,"text":"−12,63%","textPreview":"−12,63%","textChars":7,"textLines":1,"bbox":[930,196,260,48]}
+{"kind":"textbox","id":"sh/w3e5k7yp","slide":10,"text":"Benchmark","textPreview":"Benchmark","textChars":9,"textLines":1,"bbox":[930,278,260,22]}
+{"kind":"textbox","id":"sh/x4n6tcza","slide":10,"text":"−16,31%","textPreview":"−16,31%","textChars":7,"textLines":1,"bbox":[930,314,260,48]}
+{"kind":"shape","id":"sh/p8nulo3m","slide":10,"bbox":[930,388,260,1]}
+{"kind":"textbox","id":"sh/o7etcjmh","slide":10,"text":"Perbaikan drawdown sekitar 3,7 poin persentase pada jendela positif. Keunggulan ini belum cukup menutup selisih return terhadap benchmark.","textPreview":"Perbaikan drawdown sekitar 3,7 poin persentase pada jendela positif. Keunggulan ini belum cukup menutup selisih return terhadap benchmark.","textChars":138,"textLines":1,"bbox":[930,420,275,130]}
+{"kind":"textbox","id":"sh/n65cjelw","slide":10,"text":"Pengukuran perlu diulang dengan biaya transaksi dan beberapa seed model.","textPreview":"Pengukuran perlu diulang dengan biaya transaksi dan beberapa seed model.","textChars":72,"textLines":1,"bbox":[930,582,275,54]}
+{"kind":"image","id":"im/wzypg7e5","slide":10,"name":"","geometry":"roundRect","alt":"Drawdown strategi AI dan benchmark equal weight","bbox":[42,142,840,390]}
+{"kind":"notes","id":"nt/x7pbee","slide":10,"text":"Sumber: hasil FinRL Workbench dan visualisasi yang diberikan pengguna. Angka merefleksikan konfigurasi serta periode pada tangkapan layar. Perbandingan drawdown mengacu pada tabel dan grafik evaluasi positif."}
+{"kind":"slide","id":"sl/tl72e6","slide":11,"title":"UJI KETAHANAN","textShapes":14}
+{"kind":"textbox","id":"sh/8nax8ryp","slide":11,"text":"UJI KETAHANAN","textPreview":"UJI KETAHANAN","textChars":13,"textLines":1,"bbox":[42,22,400,18]}
+{"kind":"textbox","id":"sh/7m1gzmh4","slide":11,"text":"Hasil negatif pada jendela lain menegaskan risiko ketidakstabilan","textPreview":"Hasil negatif pada jendela lain menegaskan risiko ketidakstabilan","textChars":65,"textLines":1,"bbox":[42,48,1180,58]}
+{"kind":"shape","id":"sh/6lsf6hgj","slide":11,"bbox":[42,112,1196,1]}
+{"kind":"textbox","id":"sh/lkjyxczy","slide":11,"text":"11","textPreview":"11","textChars":2,"textLines":1,"bbox":[1194,682,44,18]}
+{"kind":"shape","id":"sh/kjax47yd","slide":11,"bbox":[42,139,330,152]}
+{"kind":"textbox","id":"sh/ji1gv2h8","slide":11,"text":"Return strategi","textPreview":"Return strategi","textChars":15,"textLines":1,"bbox":[60,155,294,24]}
+{"kind":"textbox","id":"sh/yh8f2xgn","slide":11,"text":"−4,04%","textPreview":"−4,04%","textChars":6,"textLines":1,"bbox":[60,186,294,55]}
+{"kind":"shape","id":"sh/5g3y9wfi","slide":11,"bbox":[392,139,330,152]}
+{"kind":"textbox","id":"sh/4fuhgbyx","slide":11,"text":"Max drawdown","textPreview":"Max drawdown","textChars":12,"textLines":1,"bbox":[410,155,294,24]}
+{"kind":"textbox","id":"sh/ehc7up47","slide":11,"text":"−25,43%","textPreview":"−25,43%","textChars":7,"textLines":1,"bbox":[410,186,294,55]}
+{"kind":"shape","id":"sh/zil8nu5c","slide":11,"bbox":[742,139,330,152]}
+{"kind":"textbox","id":"sh/0ju9wzmx","slide":11,"text":"Sharpe","textPreview":"Sharpe","textChars":6,"textLines":1,"bbox":[760,155,294,24]}
+{"kind":"textbox","id":"sh/1k3qp4ni","slide":11,"text":"−0,29","textPreview":"−0,29","textChars":5,"textLines":1,"bbox":[760,186,294,55]}
+{"kind":"shape","id":"sh/qts7qp4v","slide":11,"bbox":[1102,139,136,152]}
+{"kind":"textbox","id":"sh/ru18ju5g","slide":11,"text":"6/6","textPreview":"6/6","textChars":3,"textLines":1,"bbox":[1122,182,95,44]}
+{"kind":"textbox","id":"sh/cvupszm1","slide":11,"text":"cek dasar lulus","textPreview":"cek dasar lulus","textChars":15,"textLines":1,"bbox":[1114,236,112,26]}
+{"kind":"textbox","id":"sh/apwr294z","slide":11,"text":"Mengapa penting","textPreview":"Mengapa penting","textChars":15,"textLines":1,"bbox":[768,348,330,28]}
+{"kind":"textbox","id":"sh/bq58velk","slide":11,"text":"Loader, manifest, urutan periode, benchmark, jumlah observasi, dan nilai finite dapat lulus sementara performa ekonomi tetap lemah.","textPreview":"Loader, manifest, urutan periode, benchmark, jumlah observasi, dan nilai finite dapat lulus sementara performa ekonomi tetap lemah.","textChars":131,"textLines":1,"bbox":[768,392,420,118]}
+{"kind":"textbox","id":"sh/7ux4n6lc","slide":11,"text":"Kelayakan teknis tidak sama dengan ketahanan strategi. Perbedaan hasil antarjendela menjadi temuan utama riset ini.","textPreview":"Kelayakan teknis tidak sama dengan ketahanan strategi. Perbedaan hasil antarjendela menjadi temuan utama riset ini.","textChars":115,"textLines":1,"bbox":[768,546,420,76]}
+{"kind":"image","id":"im/qt032x4n","slide":11,"name":"","geometry":"roundRect","alt":"Bukti kelayakan dan metrik evaluasi negatif","bbox":[42,335,680,286]}
+{"kind":"notes","id":"nt/tl72e6","slide":11,"text":"Sumber: hasil FinRL Workbench dan visualisasi yang diberikan pengguna. Angka merefleksikan konfigurasi serta periode pada tangkapan layar. Tangkapan layar menunjukkan seluruh pemeriksaan dasar lulus, dengan return −4,04%, max drawdown −25,43%, dan Sharpe −0,29."}
+{"kind":"slide","id":"sl/ihsgxc","slide":12,"title":"KESIMPULAN","textShapes":18}
+{"kind":"textbox","id":"sh/o36t8rm5","slide":12,"text":"KESIMPULAN","textPreview":"KESIMPULAN","textChars":10,"textLines":1,"bbox":[42,22,400,18]}
+{"kind":"textbox","id":"sh/n2xcfmlk","slide":12,"text":"Kesimpulan dan langkah riset berikutnya","textPreview":"Kesimpulan dan langkah riset berikutnya","textChars":39,"textLines":1,"bbox":[42,48,1180,58]}
+{"kind":"shape","id":"sh/m1ob6h4z","slide":12,"bbox":[42,112,1196,1]}
+{"kind":"textbox","id":"sh/xszulg3m","slide":12,"text":"12","textPreview":"12","textChars":2,"textLines":1,"bbox":[1194,682,44,18]}
+{"kind":"textbox","id":"sh/wrqtcb21","slide":12,"text":"Kesimpulan","textPreview":"Kesimpulan","textChars":10,"textLines":1,"bbox":[42,144,260,30]}
+{"kind":"textbox","id":"sh/bqxcj6lg","slide":12,"text":"Screening berhasil mempersempit fokus ke ADRO, PTBA, BBRI, JPFA, dan BBCA. Model A2C menunjukkan potensi pengendalian drawdown pada satu periode, tetapi belum stabil lintas jendela uji.","textPreview":"Screening berhasil mempersempit fokus ke ADRO, PTBA, BBRI, JPFA, dan BBCA. Model A2C menunjukkan potensi pengendalian drawdown pada satu ...","textChars":185,"textLines":1,"bbox":[42,190,1120,92]}
+{"kind":"shape","id":"sh/a5oba14v","slide":12,"bbox":[42,315,1196,1]}
+{"kind":"textbox","id":"sh/dwvu9c3i","slide":12,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[42,348,55,28]}
+{"kind":"textbox","id":"sh/cvmt07mx","slide":12,"text":"Walk-forward multi-periode","textPreview":"Walk-forward multi-periode","textChars":26,"textLines":1,"bbox":[120,348,300,28]}
+{"kind":"textbox","id":"sh/qdwn69g7","slide":12,"text":"Pisahkan pemilihan model, validasi, dan evaluasi akhir agar tidak bergantung pada satu jendela.","textPreview":"Pisahkan pemilihan model, validasi, dan evaluasi akhir agar tidak bergantung pada satu jendela.","textChars":95,"textLines":1,"bbox":[440,348,760,48]}
+{"kind":"shape","id":"sh/re5ofehs","slide":12,"bbox":[42,406,1196,1]}
+{"kind":"textbox","id":"sh/cfe58zyx","slide":12,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[42,423,55,28]}
+{"kind":"textbox","id":"sh/dgn6h4zi","slide":12,"text":"Biaya transaksi dan slippage","textPreview":"Biaya transaksi dan slippage","textChars":28,"textLines":1,"bbox":[120,423,300,28]}
+{"kind":"textbox","id":"sh/ehw7a9g3","slide":12,"text":"Masukkan friksi pasar serta batas likuiditas untuk menguji apakah return tetap bertahan.","textPreview":"Masukkan friksi pasar serta batas likuiditas untuk menguji apakah return tetap bertahan.","textChars":88,"textLines":1,"bbox":[440,423,760,48]}
+{"kind":"shape","id":"sh/zipojeho","slide":12,"bbox":[42,481,1196,1]}
+{"kind":"textbox","id":"sh/0jypcjy9","slide":12,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[42,498,55,28]}
+{"kind":"textbox","id":"sh/1k76lozu","slide":12,"text":"Robustness model","textPreview":"Robustness model","textChars":16,"textLines":1,"bbox":[120,498,300,28]}
+{"kind":"textbox","id":"sh/m5g7etgf","slide":12,"text":"Ulangi beberapa random seed, bandingkan A2C dengan PPO dan baseline sederhana.","textPreview":"Ulangi beberapa random seed, bandingkan A2C dengan PPO dan baseline sederhana.","textChars":78,"textLines":1,"bbox":[440,498,760,48]}
+{"kind":"shape","id":"sh/n6ponyhk","slide":12,"bbox":[42,556,1196,1]}
+{"kind":"textbox","id":"sh/ja9ovyxs","slide":12,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[42,573,55,28]}
+{"kind":"textbox","id":"sh/y90n2tw7","slide":12,"text":"Overlay fundamental","textPreview":"Overlay fundamental","textChars":19,"textLines":1,"bbox":[120,573,300,28]}
+{"kind":"textbox","id":"sh/lcr6xovy","slide":12,"text":"Tambahkan valuasi, kualitas laba, leverage, dan katalis emiten sebelum membuat keputusan investasi.","textPreview":"Tambahkan valuasi, kualitas laba, leverage, dan katalis emiten sebelum membuat keputusan investasi.","textChars":99,"textLines":1,"bbox":[440,573,760,48]}
+{"kind":"textbox","id":"sh/kbi543ed","slide":12,"text":"Laporan ini adalah alat riset kuantitatif dan bukan rekomendasi investasi.","textPreview":"Laporan ini adalah alat riset kuantitatif dan bukan rekomendasi investasi.","textChars":74,"textLines":1,"bbox":[42,663,900,20]}
+{"kind":"notes","id":"nt/ihsgxc","slide":12,"text":"Sumber: hasil FinRL Workbench dan visualisasi yang diberikan pengguna. Angka merefleksikan konfigurasi serta periode pada tangkapan layar. Rekomendasi metodologis didasarkan pada perbedaan hasil yang terlihat antarjendela evaluasi."}
