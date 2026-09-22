@@ -1864,9 +1864,9 @@ def show_documentation(config: ExperimentConfig) -> None:
         "Baca panduan operasional, unduh artefak sesi, dan temukan lokasi model."
     )
 
-    output_tab, guide_tab, diagram_tab, glossary_tab = st.tabs(
+    output_tab, guide_tab, paper_tab, diagram_tab, glossary_tab = st.tabs(
         (
-            "Pusat output", "Panduan lengkap", "Diagram engine",
+            "Pusat output", "Panduan lengkap", "Roadmap paper", "Diagram engine",
             "Output apa yang bisa dipakai?",
         )
     )
@@ -1944,6 +1944,20 @@ def show_documentation(config: ExperimentConfig) -> None:
             st.markdown(guide)
         else:
             st.warning(f"Dokumentasi tidak ditemukan di {guide_path}.")
+
+    with paper_tab:
+        paper_path = PROJECT_ROOT / "docs" / "ROADMAP_PAPER_DAN_TEORI.md"
+        if paper_path.exists():
+            paper_guide = paper_path.read_text(encoding="utf-8")
+            st.download_button(
+                "Unduh roadmap paper (Markdown)",
+                paper_guide.encode("utf-8"),
+                paper_path.name,
+                "text/markdown",
+            )
+            st.markdown(paper_guide)
+        else:
+            st.warning(f"Roadmap paper tidak ditemukan di {paper_path}.")
 
     with diagram_tab:
         st.markdown("#### Arsitektur platform")

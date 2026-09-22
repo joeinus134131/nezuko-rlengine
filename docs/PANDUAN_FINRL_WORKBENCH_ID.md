@@ -1230,3 +1230,12 @@ Selain tes koneksi, validasi production mencakup timezone Asia/Jakarta, kalender
 IDX, auction/session state, corporate action dan adjusted/raw price, lot size,
 tick size, suspended symbol, missing bar, entitlement redistribution, serta
 perbandingan snapshot dengan terminal resmi pada beberapa kondisi pasar.
+
+## 17. Referensi akademik dan roadmap belajar
+
+Roadmap paper yang memetakan teori ke data pipeline, indikator, environment,
+algoritma A2C/DDPG/PPO/TD3/SAC, backtest, turbulence, biaya transaksi, dan AI
+sentiment tersedia di `docs/ROADMAP_PAPER_DAN_TEORI.md`.
+
+Mulai dari paper FinRL, lanjutkan ke paper algoritma yang sedang dipakai, lalu
+prioritaskan literatur backtest overfitting sebelum menafsirkan return model.
