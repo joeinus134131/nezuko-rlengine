@@ -1,0 +1,69 @@
+name: Deploy Finance Dashboard
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: finance-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to production VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Configure SSH
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$VPS_SSH_KEY" > "$HOME/.ssh/finance_deploy"
+          chmod 600 "$HOME/.ssh/finance_deploy"
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+      - name: Pull, rebuild, and verify
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh \
+            -i "$HOME/.ssh/finance_deploy" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            "$VPS_USER@$VPS_HOST" 'bash -se' <<'REMOTE'
+          set -euo pipefail
+
+          cd /home/ubuntu/nezuko-rlengine
+          git fetch origin main
+          git checkout main
+          git merge --ff-only origin/main
+
+          sudo docker compose -f deploy/compose.yaml build
+          sudo docker compose -f deploy/compose.yaml up -d --remove-orphans
+
+          for attempt in $(seq 1 36); do
+            status="$(sudo docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' nezuko-finance 2>/dev/null || true)"
+            if [ "$status" = "healthy" ]; then
+              break
+            fi
+            if [ "$status" = "unhealthy" ]; then
+              sudo docker logs --tail 150 nezuko-finance
+              exit 1
+            fi
+            sleep 5
+          done
+
+          test "$(sudo docker inspect --format='{{.State.Health.Status}}' nezuko-finance)" = "healthy"
+          curl --fail --silent --show-error --max-time 20 \
+            https://finance.idnmakerspace.com/_stcore/health
+          REMOTE
