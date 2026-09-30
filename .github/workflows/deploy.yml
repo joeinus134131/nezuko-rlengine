@@ -45,8 +45,8 @@ jobs:
 
           cd /home/ubuntu/nezuko-rlengine
           git fetch origin main
-          git checkout main
-          git merge --ff-only origin/main
+          git checkout -f main
+          git reset --hard origin/main
 
           sudo docker compose -f deploy/compose.yaml build
           sudo docker compose -f deploy/compose.yaml up -d --remove-orphans
