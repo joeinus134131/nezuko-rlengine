@@ -1,0 +1,32 @@
+services:
+  finance:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: nezuko-finance
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Jakarta
+      HOME: /app/runtime
+    volumes:
+      - finance_runtime:/app/runtime
+      - finance_output:/app/output
+      - finance_models:/app/trained_models
+    networks:
+      - web
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+networks:
+  web:
+    external: true
+    name: n8n_default
+
+volumes:
+  finance_runtime:
+  finance_output:
+  finance_models:

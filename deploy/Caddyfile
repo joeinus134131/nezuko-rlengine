@@ -1,0 +1,38 @@
+n8n.idnmakerspace.com {
+    encode zstd gzip
+    reverse_proxy n8n:5678
+}
+
+api.idnmakerspace.com {
+    encode zstd gzip
+
+    request_body {
+        max_size 2MB
+    }
+
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy no-referrer
+        -Server
+    }
+
+    reverse_proxy tridiardusim-api:8080
+}
+
+9router.idnmakerspace.com {
+    encode zstd gzip
+    reverse_proxy 9router:20128
+}
+
+finance.idnmakerspace.com {
+    encode zstd gzip
+
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy strict-origin-when-cross-origin
+        -Server
+    }
+
+    reverse_proxy nezuko-finance:8501
+}

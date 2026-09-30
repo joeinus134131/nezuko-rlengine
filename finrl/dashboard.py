@@ -11,6 +11,7 @@ import subprocess
 import sys
 from dataclasses import asdict
 from dataclasses import dataclass
+from html import escape
 from pathlib import Path
 from typing import Any
 
@@ -65,6 +66,194 @@ NAVIGATION = (
     "Paper Trading",
     "Dokumentasi & Output",
 )
+APP_NAME = "NEZU"
+NAVIGATION_LABELS = {
+    "Beranda": "Today",
+    "Data Market": "Data & Quality",
+    "Data Sources & Broker": "Connections",
+    "Analisa IDX": "Stock Intelligence",
+    "Training": "Experiment Lab",
+    "Model & Evaluasi": "Models & Evaluation",
+    "AI Research Copilot": "AI Research",
+    "Monitoring & Notifikasi": "Monitor",
+    "Paper Trading": "Paper Trading",
+    "Dokumentasi & Output": "Documentation",
+}
+NAVIGATION_ICONS = {
+    "Beranda": ":material/home:",
+    "Data Market": ":material/database:",
+    "Data Sources & Broker": ":material/hub:",
+    "Analisa IDX": ":material/query_stats:",
+    "Training": ":material/science:",
+    "Model & Evaluasi": ":material/model_training:",
+    "AI Research Copilot": ":material/auto_awesome:",
+    "Monitoring & Notifikasi": ":material/monitoring:",
+    "Paper Trading": ":material/contract:",
+    "Dokumentasi & Output": ":material/menu_book:",
+}
+NAVIGATION_GROUPS = (
+    ("Intelligence", ("Analisa IDX", "AI Research Copilot")),
+    ("Experiments", ("Data Market", "Training", "Model & Evaluasi")),
+    ("Operations", ("Monitoring & Notifikasi", "Paper Trading")),
+    ("System", ("Data Sources & Broker", "Dokumentasi & Output")),
+)
+PAGE_META = {
+    "Beranda": ("TODAY", "Decision workspace", "Ringkasan pasar, kesiapan eksperimen, dan langkah aman berikutnya."),
+    "Data Market": ("EXPERIMENTS / DATA", "Data & quality", "Muat, validasi, dan audit histori pasar sebelum digunakan oleh model."),
+    "Data Sources & Broker": ("SYSTEM / CONNECTIONS", "Connections", "Kelola provenance data, broker paper, dan readiness setiap provider."),
+    "Analisa IDX": ("STOCKS / MARKET SCANNER", "Stock intelligence", "Tinjau kondisi teknikal, relasi, risiko, dan bukti historis ticker."),
+    "Training": ("EXPERIMENTS / TRAINING", "Experiment lab", "Latih agen reinforcement learning dengan konfigurasi yang dapat direproduksi."),
+    "Model & Evaluasi": ("EXPERIMENTS / MODELS", "Models & evaluation", "Load artefak model dan ukur performa out-of-sample secara objektif."),
+    "AI Research Copilot": ("STOCKS / RESEARCH", "AI research", "Sintesis fundamental, berita, sentimen, dan konteks model sebagai bukti tambahan."),
+    "Monitoring & Notifikasi": ("MONITOR", "Monitoring & notifications", "Pantau kondisi harian IDX dan audit pengiriman notifikasi."),
+    "Paper Trading": ("CONNECTIONS / PAPER", "Paper trading", "Uji alur eksekusi tanpa modal riil pada instrumen yang didukung broker."),
+    "Dokumentasi & Output": ("SYSTEM / DOCUMENTATION", "Documentation", "Panduan operasi, mekanisme engine, katalog output, dan batas penggunaan."),
+}
+
+
+NEZU_CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+:root {
+  --nezu-canvas: #f5f6f2;
+  --nezu-surface: #ffffff;
+  --nezu-muted: #eef1ec;
+  --nezu-ink: #202923;
+  --nezu-ink-muted: #68716b;
+  --nezu-border: #dde2dc;
+  --nezu-moss: #356a52;
+  --nezu-moss-dark: #28523f;
+  --nezu-moss-soft: #ddebe3;
+  --nezu-amber: #a97732;
+  --nezu-amber-soft: #f5e9d7;
+  --nezu-clay: #a95954;
+  --nezu-info: #566a79;
+}
+html, body, [class*="css"], .stApp {font-family: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;}
+.stApp {background: var(--nezu-canvas); color: var(--nezu-ink);}
+[data-testid="stHeader"] {background: rgba(245,246,242,.88); backdrop-filter: blur(12px);}
+[data-testid="stToolbar"] {right: 1.25rem;}
+.block-container {max-width: 1480px; padding: 1rem 2rem 4rem;}
+[data-testid="stSidebar"] {
+  background: var(--nezu-surface);
+  border-right: 1px solid var(--nezu-border);
+}
+[data-testid="stSidebarContent"] {padding: .7rem .85rem 2rem;}
+.nezu-brand {display:flex; align-items:center; gap:.75rem; padding:.55rem .35rem 1.1rem;}
+.nezu-mark {
+  width:40px; height:40px; border-radius:12px; display:grid; place-items:center;
+  color:white; background:var(--nezu-moss); font-weight:700; letter-spacing:-.04em;
+  box-shadow:0 8px 20px rgba(53,106,82,.18);
+}
+.nezu-brand-name {font-size:1.12rem; line-height:1.15; font-weight:700; letter-spacing:.08em; color:var(--nezu-ink);}
+.nezu-brand-sub {font-size:.72rem; color:var(--nezu-ink-muted); margin-top:.18rem;}
+.nezu-side-label {font-size:.67rem; font-weight:700; letter-spacing:.12em; color:#8b948e; padding:.4rem .55rem .35rem;}
+[data-testid="stSidebar"] [role="radiogroup"] {gap:.22rem;}
+[data-testid="stSidebar"] [role="radiogroup"] label {
+  min-height:42px; border-radius:10px; padding:.46rem .58rem; transition:all .16s ease; color:var(--nezu-ink);
+}
+[data-testid="stSidebar"] [role="radiogroup"] label > div:first-child {display:none;}
+[data-testid="stSidebar"] [role="radiogroup"] label p {color:inherit !important;}
+[data-testid="stSidebar"] [role="radiogroup"] label:hover {background:var(--nezu-muted);}
+[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {
+  background:var(--nezu-moss-soft); color:var(--nezu-moss-dark); font-weight:600;
+}
+[data-testid="stSidebar"] [data-testid="stRadio"] > label {display:none;}
+.st-key-nezu_navigation {margin:.1rem 0 .7rem;}
+.st-key-nezu_navigation .stButton {margin-bottom:.2rem;}
+.st-key-nezu_navigation .stButton > button {
+  width:100%; justify-content:flex-start; padding-left:.75rem; min-height:40px;
+  border-color:transparent; background:transparent; color:var(--nezu-ink); font-weight:500;
+}
+.st-key-nezu_navigation .stButton > button > div,
+.st-key-nezu_navigation .stButton > button > div > span {width:100%; justify-content:flex-start;}
+.st-key-nezu_navigation .stButton > button:hover {background:var(--nezu-muted); border-color:transparent;}
+.st-key-nezu_navigation .stButton > button[kind="primary"] {
+  background:var(--nezu-moss-soft); border-color:transparent; color:var(--nezu-moss-dark); font-weight:650;
+}
+.st-key-nezu_navigation [data-testid="stExpander"] {
+  border:0; border-radius:10px; background:transparent; margin:.15rem 0;
+}
+.st-key-nezu_navigation [data-testid="stExpander"] details > summary {
+  min-height:40px; border-radius:10px; padding:.2rem .55rem; font-size:.8rem; font-weight:650;
+}
+.st-key-nezu_navigation [data-testid="stExpander"] details > summary:hover {background:var(--nezu-muted);}
+.st-key-nezu_navigation [data-testid="stExpanderDetails"] {padding:.15rem 0 .25rem .55rem;}
+.nezu-side-health {
+  border:1px solid var(--nezu-border); border-radius:12px; padding:.75rem .8rem; margin:.8rem .2rem .7rem;
+  background:#fbfcfa; color:var(--nezu-ink-muted); font-size:.72rem; line-height:1.7;
+}
+.nezu-side-health strong {color:var(--nezu-ink); font-weight:600;}
+.nezu-dot {display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--nezu-moss); margin-right:.38rem;}
+.nezu-dot.neutral {background:var(--nezu-info);}
+.nezu-topbar {
+  min-height:44px; display:flex; align-items:center; justify-content:space-between; gap:1rem;
+  border-bottom:1px solid var(--nezu-border); color:var(--nezu-ink-muted); font-size:.76rem; margin-bottom:1.75rem;
+}
+.nezu-topbar strong {color:var(--nezu-ink); font-weight:600;}
+.nezu-page-head {margin-bottom:1.5rem; max-width:850px;}
+.nezu-eyebrow {font-size:.7rem; letter-spacing:.14em; font-weight:700; color:var(--nezu-moss); margin-bottom:.38rem;}
+.nezu-page-head h1 {font-size:2rem; line-height:1.2; letter-spacing:-.035em; color:var(--nezu-ink); margin:0 0 .45rem; font-weight:650;}
+.nezu-page-head p {font-size:.94rem; line-height:1.6; color:var(--nezu-ink-muted); margin:0;}
+.nezu-hero {
+  padding:1.35rem 1.45rem; border:1px solid var(--nezu-border); border-radius:16px;
+  background:linear-gradient(135deg, #ffffff 0%, #edf5ef 100%); margin-bottom:1rem;
+}
+.nezu-hero-kicker {font-size:.7rem; letter-spacing:.12em; color:var(--nezu-moss); font-weight:700;}
+.nezu-hero h2 {font-size:1.42rem; line-height:1.35; color:var(--nezu-ink); margin:.32rem 0 .4rem;}
+.nezu-hero p {color:var(--nezu-ink-muted); margin:0; max-width:760px; line-height:1.55;}
+.nezu-status-card {
+  min-height:128px; padding:1rem; border:1px solid var(--nezu-border); border-radius:14px;
+  background:var(--nezu-surface); box-shadow:0 8px 24px rgba(32,41,35,.035);
+}
+.nezu-status-label {font-size:.66rem; letter-spacing:.09em; color:var(--nezu-ink-muted); font-weight:700;}
+.nezu-status-value {font-size:1.05rem; line-height:1.3; color:var(--nezu-ink); font-weight:650; margin:.58rem 0 .32rem;}
+.nezu-status-note {font-size:.75rem; line-height:1.45; color:var(--nezu-ink-muted);}
+.nezu-pill {display:inline-flex; align-items:center; gap:.35rem; border-radius:999px; padding:.2rem .52rem; background:var(--nezu-moss-soft); color:var(--nezu-moss-dark); font-size:.68rem; font-weight:600;}
+.nezu-workflow {
+  display:grid; grid-template-columns:repeat(7, minmax(90px, 1fr)); gap:8px; margin:.5rem 0 1.1rem;
+}
+.nezu-step {background:var(--nezu-surface); border:1px solid var(--nezu-border); border-radius:12px; padding:.8rem; min-height:92px;}
+.nezu-step b {display:block; width:24px; height:24px; border-radius:8px; background:var(--nezu-moss-soft); color:var(--nezu-moss-dark); text-align:center; line-height:24px; font-size:.72rem; margin-bottom:.55rem;}
+.nezu-step span {font-size:.75rem; line-height:1.35; font-weight:600; color:var(--nezu-ink);}
+h1, h2, h3 {color:var(--nezu-ink); letter-spacing:-.02em;}
+h3 {font-size:1.08rem !important; margin-top:1.6rem !important;}
+[data-testid="stMetric"] {
+  background:var(--nezu-surface); padding:.92rem 1rem; border:1px solid var(--nezu-border);
+  border-radius:14px; box-shadow:0 8px 24px rgba(32,41,35,.03);
+}
+[data-testid="stMetricLabel"] {color:var(--nezu-ink-muted);}
+[data-testid="stMetricValue"] {color:var(--nezu-ink); font-variant-numeric:tabular-nums;}
+.stButton > button, .stDownloadButton > button {
+  border-radius:10px; min-height:40px; border-color:var(--nezu-border); font-weight:600;
+  box-shadow:none; transition:all .16s ease; background:var(--nezu-surface); color:var(--nezu-ink);
+}
+.stButton > button:hover, .stDownloadButton > button:hover {border-color:var(--nezu-moss); color:var(--nezu-moss-dark);}
+.stButton > button[kind="primary"] {background:var(--nezu-moss); border-color:var(--nezu-moss); color:white;}
+.stButton > button[kind="primary"]:hover {background:var(--nezu-moss-dark); color:white;}
+[data-baseweb="input"] > div, [data-baseweb="select"] > div, [data-baseweb="textarea"] {
+  border-color:var(--nezu-border) !important; border-radius:10px !important; background:var(--nezu-surface) !important;
+}
+[data-baseweb="tab-list"] {gap:.35rem; border-bottom:1px solid var(--nezu-border);}
+[data-baseweb="tab"] {border-radius:9px 9px 0 0; color:var(--nezu-ink-muted);}
+[aria-selected="true"][data-baseweb="tab"] {color:var(--nezu-moss-dark); font-weight:600; background:var(--nezu-moss-soft);}
+[data-testid="stExpander"] {background:var(--nezu-surface); border:1px solid var(--nezu-border); border-radius:12px; overflow:hidden;}
+[data-testid="stExpander"] summary, [data-testid="stExpander"] summary p {color:var(--nezu-ink) !important;}
+[data-testid="stDataFrame"] {border:1px solid var(--nezu-border); border-radius:12px; overflow:hidden; background:var(--nezu-surface);}
+[data-testid="stAlert"] {border-radius:12px; border-width:1px;}
+hr {border-color:var(--nezu-border) !important;}
+code {color:var(--nezu-moss-dark); background:var(--nezu-muted); border-radius:5px; padding:.08rem .28rem;}
+@media (max-width: 1100px) {
+  .nezu-workflow {grid-template-columns:repeat(4, 1fr);}
+  .block-container {padding-left:1.1rem; padding-right:1.1rem;}
+}
+@media (max-width: 700px) {
+  .nezu-topbar {align-items:flex-start; flex-direction:column; padding-bottom:.7rem;}
+  .nezu-workflow {grid-template-columns:repeat(2, 1fr);}
+  .nezu-page-head h1 {font-size:1.65rem;}
+}
+</style>
+"""
 
 
 @dataclass
@@ -85,6 +274,79 @@ class ExperimentConfig:
     agent_params: dict[str, Any]
     universe: str
     risk_free_rate: float
+
+
+def _go_to(page: str) -> None:
+    st.session_state["navigation"] = page
+
+
+def _render_sidebar_navigation() -> str:
+    """Render a compact hierarchy while preserving the existing page routing."""
+    page = st.session_state.get("navigation", "Beranda")
+    if page not in NAVIGATION:
+        page = "Beranda"
+        st.session_state["navigation"] = page
+
+    st.button(
+        NAVIGATION_LABELS["Beranda"],
+        key="nav_beranda",
+        icon=NAVIGATION_ICONS["Beranda"],
+        type="primary" if page == "Beranda" else "secondary",
+        use_container_width=True,
+        on_click=_go_to,
+        args=("Beranda",),
+    )
+    for group, pages in NAVIGATION_GROUPS:
+        with st.expander(group, expanded=page in pages):
+            for target in pages:
+                st.button(
+                    NAVIGATION_LABELS[target],
+                    key=f"nav_{target.lower().replace(' ', '_').replace('&', 'and')}",
+                    icon=NAVIGATION_ICONS[target],
+                    type="primary" if page == target else "secondary",
+                    use_container_width=True,
+                    on_click=_go_to,
+                    args=(target,),
+                )
+    return page
+
+
+def _render_page_header(page: str) -> None:
+    eyebrow, title, description = PAGE_META[page]
+    now = pd.Timestamp.now(tz="Asia/Jakarta")
+    session = "Pra-pasar"
+    if now.weekday() < 5:
+        minute = now.hour * 60 + now.minute
+        if 9 * 60 <= minute < 12 * 60:
+            session = "Sesi 1 IDX"
+        elif 13 * 60 + 30 <= minute < 16 * 60:
+            session = "Sesi 2 IDX"
+        elif minute >= 16 * 60:
+            session = "Pasar tutup"
+    st.markdown(
+        f"""
+        <div class="nezu-topbar">
+          <div><span class="nezu-dot"></span><strong>{escape(session)}</strong> · Research workspace</div>
+          <div>Waktu Jakarta · {now.strftime('%d %b %Y, %H:%M WIB')}</div>
+        </div>
+        <div class="nezu-page-head">
+          <div class="nezu-eyebrow">{escape(eyebrow)}</div>
+          <h1>{escape(title)}</h1>
+          <p>{escape(description)}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _status_card(label: str, value: str, note: str) -> str:
+    return (
+        '<div class="nezu-status-card">'
+        f'<div class="nezu-status-label">{escape(label.upper())}</div>'
+        f'<div class="nezu-status-value">{escape(value)}</div>'
+        f'<div class="nezu-status-note">{escape(note)}</div>'
+        '</div>'
+    )
 
 
 def _parse_json(value: str, label: str) -> dict[str, Any]:
@@ -230,8 +492,8 @@ def load_company_research_context(ticker: str) -> dict[str, Any]:
 
 
 def build_config() -> ExperimentConfig:
-    with st.sidebar:
-        st.header("Konfigurasi eksperimen")
+    with st.sidebar.expander("Konfigurasi eksperimen", expanded=False):
+        st.caption("Data, agent, periode, dan artefak model aktif.")
         uploaded_config = st.file_uploader(
             "Load konfigurasi / manifest",
             type=("json",),
@@ -515,36 +777,71 @@ def _build_evaluation_report(
 
 
 def show_home(config: ExperimentConfig) -> None:
-    st.subheader("Investment AI Research Workspace")
-    st.caption(
-        "Alur riset teknikal dan historis yang dapat direproduksi—bukan rekomendasi investasi otomatis."
-    )
     artifact = _resolve_model_path(config.model_path)
     data = st.session_state.get("market_data")
     equity = st.session_state.get("equity_curve")
-    a, b, c, d = st.columns(4)
-    a.metric("Universe", config.universe)
-    b.metric("Ticker", len(config.tickers))
-    c.metric("Data", "Siap" if data is not None else "Belum dimuat")
-    d.metric("Model", "Ditemukan" if artifact else "Belum tersedia")
-
-    st.markdown("### Workflow eksperimen")
-    st.graphviz_chart(
+    st.markdown(
         """
-        digraph workflow {
-          rankdir=LR;
-          node [shape=box, style="rounded"];
-          config [label="1. Config"];
-          data [label="2. Data & QA"];
-          analysis [label="3. Analisa"];
-          train [label="4. Train"];
-          model [label="5. Load model"];
-          test [label="6. OOS evaluation"];
-          paper [label="7. Paper test"];
-          config -> data -> analysis -> train -> model -> test -> paper;
-        }
+        <div class="nezu-hero">
+          <div class="nezu-hero-kicker">WORKSPACE AKTIF · HUMAN IN CONTROL</div>
+          <h2>Apa yang patut ditinjau hari ini?</h2>
+          <p>NEZU menyatukan data, bukti teknikal, reinforcement learning, dan konteks riset.
+          Setiap output adalah dukungan keputusan—bukan instruksi beli atau jual otomatis.</p>
+        </div>
         """,
-        width="stretch",
+        unsafe_allow_html=True,
+    )
+    action_a, action_b, action_space = st.columns((1, 1, 3.5))
+    action_a.button(
+        "Review market", type="primary", use_container_width=True,
+        on_click=_go_to, args=("Analisa IDX",),
+    )
+    action_b.button(
+        "Run analysis", use_container_width=True,
+        on_click=_go_to, args=("Data Market",),
+    )
+
+    a, b, c, d = st.columns(4)
+    a.markdown(
+        _status_card("Market universe", config.universe, f"{len(config.tickers)} ticker dalam konfigurasi"),
+        unsafe_allow_html=True,
+    )
+    b.markdown(
+        _status_card(
+            "Data quality", "Siap dianalisis" if data is not None else "Menunggu data",
+            "Dataset tersedia di memori sesi" if data is not None else "Muat dan validasi sebelum eksperimen",
+        ),
+        unsafe_allow_html=True,
+    )
+    c.markdown(
+        _status_card(
+            "Active model", config.model_name.upper() if artifact else "Belum tersedia",
+            "Artefak ditemukan · research only" if artifact else "Training atau load model diperlukan",
+        ),
+        unsafe_allow_html=True,
+    )
+    d.markdown(
+        _status_card(
+            "Evaluation", "OOS tersedia" if equity is not None else "Belum dijalankan",
+            "Equity curve siap direview" if equity is not None else "Jalankan backtest out-of-sample",
+        ),
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### Alur keputusan & eksperimen")
+    st.markdown(
+        """
+        <div class="nezu-workflow">
+          <div class="nezu-step"><b>1</b><span>Konfigurasi</span></div>
+          <div class="nezu-step"><b>2</b><span>Data & QA</span></div>
+          <div class="nezu-step"><b>3</b><span>Analisa</span></div>
+          <div class="nezu-step"><b>4</b><span>Train RL</span></div>
+          <div class="nezu-step"><b>5</b><span>Model registry</span></div>
+          <div class="nezu-step"><b>6</b><span>Evaluasi OOS</span></div>
+          <div class="nezu-step"><b>7</b><span>Paper test</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
     st.markdown("### Status kesiapan")
     status = pd.DataFrame(
@@ -558,8 +855,8 @@ def show_home(config: ExperimentConfig) -> None:
             ],
             "Langkah berikut": [
                 "Review config aktif",
-                "Buka Data Market",
-                "Buka Training atau Model & Evaluasi",
+                "Buka Data & Quality",
+                "Buka Experiment Lab atau Models & Evaluation",
                 "Jalankan backtest out-of-sample",
             ],
         }
@@ -619,7 +916,7 @@ def show_data(config: ExperimentConfig, source_kwargs: dict[str, str]) -> None:
         st.download_button(
             "Unduh seluruh data pasar (CSV)",
             data.to_csv(index=False).encode("utf-8"),
-            "finrl_market_data.csv",
+            "nezu_market_data.csv",
             "text/csv",
         )
         if {date_col, "tic", "close"}.issubset(data.columns):
@@ -910,7 +1207,7 @@ def show_provider_hub(config: ExperimentConfig) -> None:
               licensed [label="Licensed feed"];
               broker [label="Broker quote/account"];
               gate [label="Freshness + deviation gate"];
-              rl [label="FinRL history/training"];
+              rl [label="NEZU RL engine (FinRL core)"];
               decision [label="Decision support"];
               ticker -> normalize;
               normalize -> research;
@@ -1186,7 +1483,7 @@ def show_backtest(config: ExperimentConfig, source_kwargs: dict[str, str]) -> No
         st.download_button(
             "Unduh hasil backtest (CSV)",
             frame.to_csv(index=False).encode("utf-8"),
-            "finrl_backtest.csv",
+            "nezu_backtest.csv",
             "text/csv",
         )
 
@@ -1785,7 +2082,7 @@ def show_monitoring(config: ExperimentConfig) -> None:
             send_telegram_message(
                 bot_token,
                 chat_id,
-                "FinRL Workbench: koneksi notifikasi Telegram berhasil.",
+                "NEZU: koneksi notifikasi Telegram berhasil.",
             )
             st.success("Pesan tes berhasil dikirim.")
         except Exception as error:
@@ -1876,7 +2173,7 @@ def show_documentation(config: ExperimentConfig) -> None:
         st.download_button(
             "Unduh konfigurasi (JSON)",
             config_json.encode("utf-8"),
-            "finrl_experiment_config.json",
+            "nezu_experiment_config.json",
             "application/json",
             width="stretch",
         )
@@ -1909,7 +2206,7 @@ def show_documentation(config: ExperimentConfig) -> None:
                 st.download_button(
                     "Unduh data pasar",
                     data.to_csv(index=False).encode("utf-8"),
-                    "finrl_market_data.csv",
+                    "nezu_market_data.csv",
                     "text/csv",
                     use_container_width=True,
                 )
@@ -1924,7 +2221,7 @@ def show_documentation(config: ExperimentConfig) -> None:
                 st.download_button(
                     "Unduh hasil backtest",
                     result.to_csv(index=False).encode("utf-8"),
-                    "finrl_backtest.csv",
+                    "nezu_backtest.csv",
                     "text/csv",
                     use_container_width=True,
                 )
@@ -2058,22 +2355,31 @@ dimensi state/action yang sama dengan saat training.
 
 
 def main() -> None:
-    st.set_page_config(page_title="FinRL Workbench", page_icon="📈", layout="wide")
-    st.markdown(
-        """
-        <style>
-        .block-container {padding-top: 1.5rem; padding-bottom: 3rem;}
-        [data-testid="stSidebar"] {border-right: 1px solid rgba(128,128,128,.2);}
-        [data-testid="stMetric"] {padding: .75rem; border: 1px solid rgba(128,128,128,.18); border-radius: .6rem;}
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.set_page_config(page_title="NEZU · Decision Workspace", page_icon="◈", layout="wide")
+    st.markdown(NEZU_CSS, unsafe_allow_html=True)
     with st.sidebar:
-        st.title("FinRL Workbench")
-        st.caption("Research • Train • Validate")
-        page = st.radio("Navigasi", NAVIGATION, key="navigation")
-        st.divider()
+        st.markdown(
+            """
+            <div class="nezu-brand">
+              <div class="nezu-mark">N</div>
+              <div><div class="nezu-brand-name">NEZU</div><div class="nezu-brand-sub">Decision intelligence</div></div>
+            </div>
+            <div class="nezu-side-label">NAVIGATION</div>
+            """,
+            unsafe_allow_html=True,
+        )
+        with st.container(key="nezu_navigation"):
+            page = _render_sidebar_navigation()
+        st.markdown(
+            """
+            <div class="nezu-side-health">
+              <div><span class="nezu-dot"></span><strong>Research engine</strong> · ready</div>
+              <div><span class="nezu-dot neutral"></span><strong>Mode</strong> · decision support</div>
+            </div>
+            <div class="nezu-side-label">ACTIVE EXPERIMENT</div>
+            """,
+            unsafe_allow_html=True,
+        )
     try:
         config = build_config()
     except ValueError as error:
@@ -2084,7 +2390,7 @@ def main() -> None:
         st.json(asdict(config))
     source_kwargs: dict[str, str] = st.session_state.get("source_kwargs", {})
 
-    st.title(page)
+    _render_page_header(page)
     if page == "Beranda":
         show_home(config)
     elif page == "Data Market":

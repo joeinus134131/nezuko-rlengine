@@ -1,0 +1,7 @@
+{
+  "base_url": "https://9router.idnmakerspace.com/v1",
+  "model": "gemini/gemini-3-flash-preview",
+  "fallback_models": [],
+  "temperature": 0.2,
+  "mode": "Analisis lengkap"
+}
