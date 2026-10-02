@@ -13,13 +13,6 @@ services:
     environment:
       TZ: Asia/Jakarta
       HOME: /app/runtime
-      DATABASE_URL: ${DATABASE_URL:-}
-      POSTGRES_HOST: ${POSTGRES_HOST:-}
-      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
-      POSTGRES_DB: ${POSTGRES_DB:-nezu}
-      POSTGRES_USER: ${POSTGRES_USER:-nezu}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
-      APP_SECRET_KEY: ${APP_SECRET_KEY:-}
     volumes:
       - finance_runtime:/app/runtime
       - finance_configs:/app/configs

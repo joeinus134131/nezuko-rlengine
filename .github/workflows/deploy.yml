@@ -50,22 +50,31 @@ jobs:
           git checkout -f main
           git reset --hard origin/main
 
-          # Write .env from GitHub Secrets (never commit this file).
-          cat > .env <<'ENVEOF'
-          DATABASE_URL=${DATABASE_URL:-}
-          APP_SECRET_KEY=${APP_SECRET_KEY:-}
-          ENVEOF
-          chmod 600 .env
+          # Write .env from GitHub Secrets if provided, otherwise preserve existing VPS .env.
+          if [ -n "${DATABASE_URL}" ]; then
+            cat > .env <<ENVEOF
+DATABASE_URL=${DATABASE_URL}
+APP_SECRET_KEY=${APP_SECRET_KEY}
+ENVEOF
+            chmod 600 .env
+          elif [ ! -f .env ]; then
+            touch .env
+            chmod 600 .env
+          fi
 
-          export DATABASE_URL="$DATABASE_URL"
-          export APP_SECRET_KEY="$APP_SECRET_KEY"
+          if [ -f .env ]; then
+            set -a
+            . ./.env
+            set +a
+          fi
+
           sudo -E docker compose -f deploy/compose.yaml build
           sudo -E docker compose -f deploy/compose.yaml up -d --remove-orphans
 
           echo "== running Postgres migrations (auto on push) =="
           sudo docker exec nezuko-finance python scripts/migrate_db.py
           echo "== verifying migration =="
-          sudo docker exec nezuko-finance python -c "from finrl.db.database import get_engine; from sqlalchemy import text; e=get_engine(); print(e.connect().execute(text('select count(*) from alembic_version')).scalar())"
+          sudo docker exec nezuko-finance python -c "from finrl.db.database import is_db_configured, get_engine; from sqlalchemy import text; (print('DB verified, alembic version count:', get_engine().connect().execute(text('select count(*) from alembic_version')).scalar()) if is_db_configured() else print('Mode file lokal, skip verification.'))"
 
           for attempt in $(seq 1 36); do
             status="$(sudo docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' nezuko-finance 2>/dev/null || true)"

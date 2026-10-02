@@ -10,6 +10,28 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 
 
+def _resolve_docker_host(url: str) -> str:
+    """When running inside Docker, rewrite localhost/127.0.0.1 to host.docker.internal."""
+    if not url or not (os.path.exists("/.dockerenv") or os.getenv("RUNNING_IN_DOCKER")):
+        return url
+    from urllib.parse import urlsplit, urlunsplit
+
+    try:
+        parts = urlsplit(url)
+        if parts.hostname in ("127.0.0.1", "localhost"):
+            netloc = parts.netloc
+            auth_prefix = ""
+            if "@" in netloc:
+                auth_prefix, _ = netloc.rsplit("@", 1)
+                auth_prefix += "@"
+            port_suffix = f":{parts.port}" if parts.port else ""
+            new_netloc = f"{auth_prefix}host.docker.internal{port_suffix}"
+            return urlunsplit((parts.scheme, new_netloc, parts.path, parts.query, parts.fragment))
+    except Exception:
+        pass
+    return url
+
+
 def get_database_url() -> str:
     url = os.getenv("DATABASE_URL", "").strip()
     # Allow separate PG* vars as fallback for VPS .env style.
@@ -21,7 +43,7 @@ def get_database_url() -> str:
             db = os.getenv("POSTGRES_DB", "nezu")
             port = os.getenv("POSTGRES_PORT", "5432")
             url = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{db}"
-    return url
+    return _resolve_docker_host(url)
 
 
 def is_db_configured() -> bool:
