@@ -12,6 +12,7 @@ import sys
 import time
 from dataclasses import asdict
 from dataclasses import dataclass
+from dataclasses import MISSING
 from html import escape
 from pathlib import Path
 from typing import Any
@@ -424,8 +425,15 @@ def notify_error(
         st.error(banner_msg)
         technical_detail = details or (raw_text if raw_text != summary or len(raw_text) > 80 else None)
         if technical_detail:
-            with st.expander("Detail teknis"):
-                st.code(technical_detail, language="text")
+            try:
+                with st.expander("Detail teknis"):
+                    st.code(technical_detail, language="text")
+            except Exception:
+                safe_detail = escape(technical_detail)
+                st.markdown(
+                    f"<details style='margin-top:8px;'><summary style='cursor:pointer;font-weight:600;font-size:0.85rem;color:var(--nezu-ink-muted);'>Detail teknis</summary><pre style='white-space:pre-wrap;font-size:0.78rem;background:var(--nezu-muted);padding:8px;border-radius:6px;margin-top:4px;'>{safe_detail}</pre></details>",
+                    unsafe_allow_html=True,
+                )
 
 
 def _status_card(label: str, value: str, note: str) -> str:
@@ -501,7 +509,15 @@ def _write_json_config(name: str, payload: dict[str, Any]) -> Path:
 
 def _apply_config_payload(payload: dict[str, Any]) -> None:
     """Apply a downloaded experiment config before widgets are instantiated."""
-    required = {field.name for field in ExperimentConfig.__dataclass_fields__.values()}
+    payload = dict(payload)
+    for field_name, field in ExperimentConfig.__dataclass_fields__.items():
+        if field_name not in payload and field.default is not MISSING:
+            payload[field_name] = field.default
+
+    required = {
+        field_name for field_name, field in ExperimentConfig.__dataclass_fields__.items()
+        if field.default is MISSING and field.default_factory is MISSING
+    }
     missing = required.difference(payload)
     if missing:
         raise ValueError(f"Field konfigurasi belum lengkap: {', '.join(sorted(missing))}")
@@ -530,6 +546,10 @@ def _apply_config_payload(payload: dict[str, Any]) -> None:
     st.session_state[f"params_{library}"] = json.dumps(
         payload["agent_params"], indent=2, ensure_ascii=False
     )
+    st.session_state["cfg_buy_cost"] = float(payload.get("buy_cost_pct", 0.0016)) * 100
+    st.session_state["cfg_sell_cost"] = float(payload.get("sell_cost_pct", 0.0035)) * 100
+    st.session_state["cfg_lot_size"] = int(payload.get("lot_size", 100))
+    st.session_state["cfg_stop_loss"] = float(payload.get("stop_loss_pct", 0.0)) * 100
     st.session_state["loaded_config_name"] = payload.get("model_path", "konfigurasi")
 
 
