@@ -22,6 +22,8 @@ services:
       APP_SECRET_KEY: ${APP_SECRET_KEY:-}
     volumes:
       - finance_runtime:/app/runtime
+      - finance_configs:/app/configs
+      - finance_logs:/app/logs
       - finance_output:/app/output
       - finance_models:/app/trained_models
     networks:
@@ -40,5 +42,7 @@ networks:
 
 volumes:
   finance_runtime:
+  finance_configs:
+  finance_logs:
   finance_output:
   finance_models:

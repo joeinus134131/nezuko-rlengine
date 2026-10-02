@@ -6,9 +6,11 @@ import datetime
 import logging
 import time
 from datetime import timedelta
+from typing import Any
 
 import numpy as np
 import pandas as pd
+import requests
 import yfinance as yf
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -22,6 +24,15 @@ from finrl.meta.data_processors.base_processor import BaseDataProcessor
 
 logger = logging.getLogger(__name__)
 
+YAHOO_CHART_ENDPOINTS = (
+    "https://query1.finance.yahoo.com/v8/finance/chart/{ticker}",
+    "https://query2.finance.yahoo.com/v8/finance/chart/{ticker}",
+)
+YAHOO_USER_AGENT = (
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+)
+
 
 ### Added by aymeric75 for scrap_data function
 
@@ -33,6 +44,93 @@ class YahooFinanceProcessor(BaseDataProcessor):
 
     def __init__(self):
         super().__init__()
+
+    @staticmethod
+    def _download_chart_api(
+        ticker: str,
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        interval: str,
+        proxy: str | dict | None = None,
+    ) -> pd.DataFrame:
+        """Fetch Yahoo's crumb-free chart endpoint as a server fallback."""
+        start_utc = pd.Timestamp(start)
+        end_utc = pd.Timestamp(end)
+        start_utc = (
+            start_utc.tz_localize("UTC")
+            if start_utc.tzinfo is None
+            else start_utc.tz_convert("UTC")
+        )
+        end_utc = (
+            end_utc.tz_localize("UTC")
+            if end_utc.tzinfo is None
+            else end_utc.tz_convert("UTC")
+        )
+        params: dict[str, Any] = {
+            "period1": int(start_utc.timestamp()),
+            "period2": int(end_utc.timestamp()),
+            "interval": interval,
+            "events": "div,splits,capitalGains",
+            "includeAdjustedClose": "true",
+        }
+        proxies = proxy if isinstance(proxy, dict) else None
+        if isinstance(proxy, str) and proxy:
+            proxies = {"http": proxy, "https": proxy}
+        failures: list[str] = []
+
+        for endpoint in YAHOO_CHART_ENDPOINTS:
+            url = endpoint.format(ticker=ticker)
+            try:
+                response = requests.get(
+                    url,
+                    params=params,
+                    headers={"User-Agent": YAHOO_USER_AGENT, "Accept": "application/json"},
+                    proxies=proxies,
+                    timeout=(5, 20),
+                )
+                response.raise_for_status()
+                chart = response.json().get("chart", {})
+                if chart.get("error"):
+                    raise RuntimeError(str(chart["error"]))
+                results = chart.get("result") or []
+                if not results:
+                    raise RuntimeError("respons chart tidak berisi result")
+                result = results[0]
+                timestamps = result.get("timestamp") or []
+                quotes = (result.get("indicators", {}).get("quote") or [{}])[0]
+                if not timestamps or not quotes:
+                    raise RuntimeError("respons chart tidak berisi OHLCV")
+
+                frame = pd.DataFrame(
+                    {
+                        "Open": quotes.get("open", []),
+                        "High": quotes.get("high", []),
+                        "Low": quotes.get("low", []),
+                        "Close": quotes.get("close", []),
+                        "Volume": quotes.get("volume", []),
+                    },
+                    index=pd.to_datetime(timestamps, unit="s", utc=True).tz_convert(None),
+                )
+                frame.index.name = "Datetime" if interval != "1d" else "Date"
+                adjusted = result.get("indicators", {}).get("adjclose") or []
+                adjusted_close = adjusted[0].get("adjclose", []) if adjusted else []
+                if len(adjusted_close) == len(frame):
+                    raw_close = pd.to_numeric(frame["Close"], errors="coerce")
+                    factor = pd.Series(adjusted_close, index=frame.index).div(
+                        raw_close.replace(0, np.nan)
+                    )
+                    for column in ("Open", "High", "Low", "Close"):
+                        frame[column] = pd.to_numeric(frame[column], errors="coerce") * factor
+                frame = frame.dropna(subset=["Close"])
+                if not frame.empty:
+                    return frame
+                raise RuntimeError("semua bar chart kosong")
+            except Exception as error:  # noqa: BLE001 - aggregate provider diagnostics
+                failures.append(f"{url}: {type(error).__name__}: {error}")
+                logger.warning("Yahoo chart fallback gagal untuk %s: %s", ticker, error)
+                time.sleep(0.5)
+
+        raise RuntimeError("; ".join(failures))
 
     """
     Param
@@ -233,6 +331,7 @@ class YahooFinanceProcessor(BaseDataProcessor):
         is_intraday = self.time_interval not in {"1d", "5d", "1wk", "1mo", "3mo"}
         chunk_size = timedelta(days=7 if self.time_interval == "1m" else 59)
         frames = []
+        failures: dict[str, list[str]] = {}
         for tic in ticker_list:
             current_tic_start_date = start_date
             while current_tic_start_date <= end_date:
@@ -241,20 +340,40 @@ class YahooFinanceProcessor(BaseDataProcessor):
                     if is_intraday
                     else end_date + timedelta(days=1)
                 )
-                temp_df = yf.download(
-                    tic,
-                    start=current_tic_start_date,
-                    end=request_end,
-                    interval=self.time_interval,
-                    proxy=proxy,
-                    auto_adjust=True,
-                    progress=False,
-                )
+                try:
+                    temp_df = yf.download(
+                        tic,
+                        start=current_tic_start_date,
+                        end=request_end,
+                        interval=self.time_interval,
+                        proxy=proxy,
+                        auto_adjust=True,
+                        progress=False,
+                        threads=False,
+                        timeout=20,
+                    )
+                except Exception as error:
+                    failures.setdefault(tic, []).append(
+                        f"yfinance: {type(error).__name__}: {error}"
+                    )
+                    temp_df = pd.DataFrame()
                 if temp_df.empty:
-                    if not is_intraday:
-                        break
-                    current_tic_start_date = request_end
-                    continue
+                    try:
+                        temp_df = self._download_chart_api(
+                            tic,
+                            current_tic_start_date,
+                            request_end,
+                            self.time_interval,
+                            proxy,
+                        )
+                    except Exception as error:
+                        failures.setdefault(tic, []).append(
+                            f"chart-api: {type(error).__name__}: {error}"
+                        )
+                        if not is_intraday:
+                            break
+                        current_tic_start_date = request_end
+                        continue
                 if temp_df.columns.nlevels != 1:
                     temp_df.columns = temp_df.columns.droplevel(1)
 
@@ -265,7 +384,23 @@ class YahooFinanceProcessor(BaseDataProcessor):
                 current_tic_start_date = request_end
 
         if not frames:
-            raise ValueError("Yahoo Finance tidak mengembalikan data untuk ticker/rentang tersebut.")
+            summary = " | ".join(
+                f"{ticker}: {'; '.join(messages[-2:])}"
+                for ticker, messages in failures.items()
+            )
+            raise ValueError(
+                "Yahoo Finance tidak mengembalikan data. Periksa akses keluar VPS, "
+                "rate limit Yahoo, ticker, dan rentang interval."
+                + (f" Detail provider: {summary}" if summary else "")
+            )
+        if failures:
+            logger.warning(
+                "Sebagian request Yahoo gagal tetapi data parsial tersedia: %s",
+                " | ".join(
+                    f"{ticker}: {'; '.join(messages[-2:])}"
+                    for ticker, messages in failures.items()
+                ),
+            )
         data_df = pd.concat(frames)
 
         data_df = data_df.reset_index().drop(columns=["Adj Close"], errors="ignore")

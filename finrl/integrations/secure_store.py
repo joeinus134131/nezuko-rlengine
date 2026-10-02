@@ -40,9 +40,18 @@ def save_secret(name: str, value: str) -> None:
             except Exception:
                 pass
             return
-        except Exception:
-            pass  # fall through to keyring
-    _backend().set_password(SERVICE_NAME, name, value)
+        except Exception as error:
+            raise RuntimeError(
+                "Secure vault database gagal menyimpan secret. Periksa DATABASE_URL, "
+                "APP_SECRET_KEY, dan migrasi tabel secrets."
+            ) from error
+    try:
+        _backend().set_password(SERVICE_NAME, name, value)
+    except Exception as error:
+        raise RuntimeError(
+            "Secure vault tidak tersedia. Untuk server/container, konfigurasi DATABASE_URL "
+            "dan APP_SECRET_KEY; OS keyring hanya digunakan untuk instalasi desktop."
+        ) from error
 
 
 def load_secret(name: str) -> str | None:
@@ -53,10 +62,12 @@ def load_secret(name: str) -> str | None:
 
             with session_factory()() as session:
                 value = load_secret_db(session, name)
-            if value:
-                return value
-        except Exception:
-            pass
+            return value or None
+        except Exception as error:
+            raise RuntimeError(
+                "Secure vault database gagal membaca secret. Periksa DATABASE_URL, "
+                "APP_SECRET_KEY, dan migrasi tabel secrets."
+            ) from error
     try:
         return _backend().get_password(SERVICE_NAME, name)
     except Exception:

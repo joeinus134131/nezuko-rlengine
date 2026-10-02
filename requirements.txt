@@ -61,4 +61,4 @@ wrds
 
 
 # market data & paper trading API
-yfinance
+yfinance==0.2.58
