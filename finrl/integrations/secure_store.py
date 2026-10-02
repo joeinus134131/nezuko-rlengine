@@ -1,4 +1,4 @@
-"""Store credentials in the operating-system credential vault via keyring."""
+"""Store credentials: Postgres (encrypted) when DATABASE_URL set, else OS keyring."""
 from __future__ import annotations
 
 SERVICE_NAME = "finrl-workbench"
@@ -14,14 +14,53 @@ def _backend():
     return keyring
 
 
+def _db_configured() -> bool:
+    try:
+        from finrl.db.database import is_db_configured
+
+        return is_db_configured()
+    except Exception:
+        return False
+
+
 def save_secret(name: str, value: str) -> None:
     if not value:
         raise ValueError("Secret tidak boleh kosong.")
+    if _db_configured():
+        try:
+            from finrl.db.database import session_factory
+            from finrl.db.repositories import save_secret_db
+
+            with session_factory()() as session:
+                save_secret_db(session, name, value)
+                session.commit()
+            # Mirror to keyring for local fallback; ignore failures on server.
+            try:
+                _backend().set_password(SERVICE_NAME, name, value)
+            except Exception:
+                pass
+            return
+        except Exception:
+            pass  # fall through to keyring
     _backend().set_password(SERVICE_NAME, name, value)
 
 
 def load_secret(name: str) -> str | None:
-    return _backend().get_password(SERVICE_NAME, name)
+    if _db_configured():
+        try:
+            from finrl.db.database import session_factory
+            from finrl.db.repositories import load_secret_db
+
+            with session_factory()() as session:
+                value = load_secret_db(session, name)
+            if value:
+                return value
+        except Exception:
+            pass
+    try:
+        return _backend().get_password(SERVICE_NAME, name)
+    except Exception:
+        return None
 
 
 def delete_secret(name: str) -> bool:

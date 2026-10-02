@@ -44,6 +44,9 @@ sphinx
 sphinx_rtd_theme
 
 SQLAlchemy
+alembic
+psycopg2-binary
+cryptography
 stable-baselines3[extra]
 stockstats>=0.4.0
 streamlit>=1.32.0
