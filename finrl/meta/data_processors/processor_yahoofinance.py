@@ -247,7 +247,7 @@ class YahooFinanceProcessor(BaseDataProcessor):
                     end=request_end,
                     interval=self.time_interval,
                     proxy=proxy,
-                    auto_adjust=False,
+                    auto_adjust=True,
                     progress=False,
                 )
                 if temp_df.empty:
@@ -269,16 +269,22 @@ class YahooFinanceProcessor(BaseDataProcessor):
         data_df = pd.concat(frames)
 
         data_df = data_df.reset_index().drop(columns=["Adj Close"], errors="ignore")
-        # convert the column names to match processor_alpaca.py as far as poss
-        data_df.columns = [
-            "timestamp",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "tic",
-        ]
+        # Map column names explicitly by name instead of positional indexing
+        rename_map = {
+            "Date": "timestamp",
+            "Datetime": "timestamp",
+            "date": "timestamp",
+            "Open": "open",
+            "High": "high",
+            "Low": "low",
+            "Close": "close",
+            "Volume": "volume",
+        }
+        data_df = data_df.rename(columns=rename_map)
+        data_df.columns = [str(c).lower() for c in data_df.columns]
+        if "date" in data_df.columns and "timestamp" not in data_df.columns:
+            data_df = data_df.rename(columns={"date": "timestamp"})
+        data_df = data_df[["timestamp", "open", "high", "low", "close", "volume", "tic"]]
 
         return data_df
 
@@ -287,11 +293,11 @@ class YahooFinanceProcessor(BaseDataProcessor):
         NY = "America/New_York"
 
         # produce full timestamp index
-        if self.time_interval == "1d":
+        if self.time_interval.lower() in {"1d", "5d", "1wk", "1mo"}:
             # Use the union of actual exchange dates. This supports IDX and
             # other non-US markets without imposing a NYSE calendar.
             times = sorted(pd.to_datetime(df["timestamp"]).dropna().unique())
-        elif self.time_interval == "1m":
+        elif self.time_interval in {"1m", "1Min"} and not any(str(t).endswith(".JK") for t in tic_list):
             trading_days = self.get_trading_days(start=self.start, end=self.end)
             times = []
             for day in trading_days:
@@ -300,9 +306,8 @@ class YahooFinanceProcessor(BaseDataProcessor):
                     times.append(current_time)
                     current_time += pd.Timedelta(minutes=1)
         else:
-            raise ValueError(
-                "Data clean at given time interval is not supported for YahooFinance data."
-            )
+            # For intraday or non-US markets, use the observed timestamps from the data
+            times = sorted(pd.to_datetime(df["timestamp"]).dropna().unique())
 
         # create a new dataframe with full timestamp series
         new_df = pd.DataFrame()

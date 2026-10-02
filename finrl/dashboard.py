@@ -9,6 +9,7 @@ import os
 import signal
 import subprocess
 import sys
+import time
 from dataclasses import asdict
 from dataclasses import dataclass
 from html import escape
@@ -33,6 +34,7 @@ from finrl.config import INDICATORS
 from finrl.config_tickers import DOW_30_TICKER
 from finrl.config_tickers import LQ45_TICKER
 from finrl.config_tickers import SRI_KEHATI_TICKER
+from finrl.integrations import auth
 from finrl.meta.data_processor import DataProcessor
 from finrl.meta.env_stock_trading.env_stocktrading_np import StockTradingEnv
 
@@ -274,6 +276,10 @@ class ExperimentConfig:
     agent_params: dict[str, Any]
     universe: str
     risk_free_rate: float
+    buy_cost_pct: float = 0.0016
+    sell_cost_pct: float = 0.0035
+    lot_size: int = 100
+    stop_loss_pct: float = 0.0
 
 
 def _go_to(page: str) -> None:
@@ -632,6 +638,29 @@ def build_config() -> ExperimentConfig:
             st.session_state[params_key] = default_params
         params = st.text_area("Parameter agent (JSON)", key=params_key)
 
+        is_idx = any(str(t).endswith(".JK") for t in _tickers(ticker_text)) or "Indonesia" in universe
+        col_c1, col_c2 = st.columns(2)
+        buy_cost = col_c1.number_input(
+            "Fee Beli (%)", min_value=0.0, max_value=5.0,
+            value=0.16 if is_idx else 0.10, step=0.01, key="cfg_buy_cost",
+        )
+        sell_cost = col_c2.number_input(
+            "Fee Jual + Pajak (%)", min_value=0.0, max_value=5.0,
+            value=0.35 if is_idx else 0.10, step=0.01, key="cfg_sell_cost",
+            help="Di IDX mencakup komisi broker (~0.25%) + PPh Final pasal 4(2) 0.1% + levy.",
+        )
+        col_l1, col_l2 = st.columns(2)
+        lot_sz = col_l1.number_input(
+            "Satuan Lot (lembar)", min_value=1,
+            value=100 if is_idx else 1, step=1, key="cfg_lot_size",
+            help="Di BEI 1 lot = 100 lembar saham.",
+        )
+        stop_loss = col_l2.number_input(
+            "Hard Stop-Loss per Posisi (%)", min_value=0.0, max_value=50.0,
+            value=0.0, step=0.5, key="cfg_stop_loss",
+            help="Likuidasi otomatis jika posisi rugi melebihi ambang batas. 0 = nonaktif.",
+        )
+
     return ExperimentConfig(
         tickers=_tickers(ticker_text), data_source=source, interval=interval,
         train_start=train_start, train_end=train_end, test_start=test_start,
@@ -639,6 +668,10 @@ def build_config() -> ExperimentConfig:
         model_name=model, model_path=model_path, timesteps=int(timesteps),
         agent_params=_parse_json(params, "Parameter agent"), universe=universe,
         risk_free_rate=float(risk_free_rate) / 100,
+        buy_cost_pct=float(buy_cost) / 100,
+        sell_cost_pct=float(sell_cost) / 100,
+        lot_size=int(lot_sz),
+        stop_loss_pct=float(stop_loss) / 100,
     )
 
 
@@ -646,7 +679,14 @@ def run_training(config: ExperimentConfig, source_kwargs: dict[str, str]) -> Any
     from finrl.train import train
 
     Path(config.model_path).parent.mkdir(parents=True, exist_ok=True)
-    shared = dict(source_kwargs, cwd=config.model_path)
+    shared = dict(
+        source_kwargs,
+        cwd=config.model_path,
+        buy_cost_pct=config.buy_cost_pct,
+        sell_cost_pct=config.sell_cost_pct,
+        lot_size=config.lot_size,
+        stop_loss_pct=config.stop_loss_pct,
+    )
     if config.drl_lib == "stable_baselines3":
         shared.update(agent_params=config.agent_params, total_timesteps=config.timesteps)
     elif config.drl_lib == "elegantrl":
@@ -675,7 +715,12 @@ def run_backtest(config: ExperimentConfig, source_kwargs: dict[str, str]) -> lis
     values = test(
         config.test_start, config.test_end, config.tickers, config.data_source,
         config.interval, config.indicators, config.drl_lib, StockTradingEnv,
-        config.model_name, config.use_vix, cwd=config.model_path, **source_kwargs,
+        config.model_name, config.use_vix, cwd=config.model_path,
+        buy_cost_pct=config.buy_cost_pct,
+        sell_cost_pct=config.sell_cost_pct,
+        lot_size=config.lot_size,
+        stop_loss_pct=config.stop_loss_pct,
+        **source_kwargs,
     )
     return list(values)
 
@@ -2354,9 +2399,160 @@ dimensi state/action yang sama dengan saat training.
         )
 
 
+AUTH_USERS_PATH = CONFIG_DIR / "users.json"
+AUTH_BRAND_NAME = "IDN Maker FINRLAB"
+AUTH_BRAND_TAGLINE = "Decision intelligence workspace"
+MAX_LOGIN_ATTEMPTS = 5
+LOGIN_LOCKOUT_SECONDS = 30
+
+AUTH_CSS = """
+<style>
+[data-testid="stSidebar"], [data-testid="collapsedControl"] {display:none;}
+.idn-auth-hero {
+  text-align:center; padding:1.7rem 1.5rem 1.3rem; border:1px solid var(--nezu-border);
+  border-radius:18px; background:linear-gradient(150deg,#ffffff 0%, #edf5ef 100%); margin-bottom:1.1rem;
+}
+.idn-auth-mark {
+  width:54px; height:54px; margin:0 auto .75rem; border-radius:15px; display:grid; place-items:center;
+  background:var(--nezu-moss); color:#fff; font-weight:700; font-size:1.02rem; letter-spacing:-.03em;
+  box-shadow:0 12px 26px rgba(53,106,82,.22);
+}
+.idn-auth-name {font-size:1.32rem; font-weight:700; letter-spacing:.02em; color:var(--nezu-ink);}
+.idn-auth-tag {font-size:.76rem; color:var(--nezu-ink-muted); margin-top:.32rem; letter-spacing:.02em;}
+.idn-auth-badge {
+  display:inline-block; margin-top:.6rem; padding:.16rem .52rem; border-radius:999px;
+  background:var(--nezu-moss-soft); color:var(--nezu-moss-dark); font-size:.66rem;
+  font-weight:700; letter-spacing:.08em;
+}
+.idn-auth-note {font-size:.72rem; color:var(--nezu-ink-muted); text-align:center; margin-top:.9rem; line-height:1.6;}
+</style>
+"""
+
+
+def _auth_hero(subtitle: str, badge: str = "SECURE ACCESS") -> str:
+    return (
+        '<div class="idn-auth-hero">'
+        '<div class="idn-auth-mark">IF</div>'
+        f'<div class="idn-auth-name">{escape(AUTH_BRAND_NAME)}</div>'
+        f'<div class="idn-auth-tag">{escape(subtitle)}</div>'
+        f'<div class="idn-auth-badge">{escape(badge)}</div>'
+        "</div>"
+    )
+
+
+def _load_auth_store() -> dict[str, Any] | None:
+    try:
+        return auth.load_users(AUTH_USERS_PATH)
+    except auth.AuthError as error:
+        st.error(f"Penyimpanan user bermasalah: {error}")
+        return None
+
+
+def _logout() -> None:
+    """Drop the whole session so credentials and cached data do not persist."""
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+
+
+def _render_setup_page() -> None:
+    st.markdown(AUTH_CSS, unsafe_allow_html=True)
+    _, center, _ = st.columns([1, 1.15, 1])
+    with center:
+        st.markdown(
+            _auth_hero("Inisialisasi administrator", badge="FIRST-RUN SETUP"),
+            unsafe_allow_html=True,
+        )
+        st.info("Belum ada akun. Buat akun admin pertama untuk mengamankan workspace ini.")
+        with st.form("idn_maker_setup"):
+            username = st.text_input("Username admin", value="admin")
+            password = st.text_input("Password", type="password")
+            confirm = st.text_input("Ulangi password", type="password")
+            submitted = st.form_submit_button(
+                "Buat akun", type="primary", use_container_width=True
+            )
+        if submitted:
+            if password != confirm:
+                st.error("Konfirmasi password tidak sama.")
+                return
+            try:
+                store = auth.load_users(AUTH_USERS_PATH)
+                auth.create_user(store, username, password, role="admin")
+                auth.save_users(AUTH_USERS_PATH, store)
+            except auth.AuthError as error:
+                st.error(str(error))
+                return
+            st.session_state["authenticated"] = True
+            st.session_state["auth_user"] = username.strip()
+            st.session_state["login_attempts"] = 0
+            st.rerun()
+
+
+def _render_login_page() -> None:
+    st.markdown(AUTH_CSS, unsafe_allow_html=True)
+    _, center, _ = st.columns([1, 1.15, 1])
+    with center:
+        st.markdown(
+            _auth_hero(f"{AUTH_BRAND_TAGLINE} · akses terbatas"),
+            unsafe_allow_html=True,
+        )
+        remaining = st.session_state.get("login_locked_until", 0.0) - time.time()
+        locked = remaining > 0
+        if locked:
+            st.warning(
+                f"Terlalu banyak percobaan. Coba lagi dalam {int(remaining) + 1} detik."
+            )
+        with st.form("idn_maker_login"):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            submitted = st.form_submit_button(
+                "Masuk", type="primary", use_container_width=True, disabled=locked
+            )
+        if submitted and not locked:
+            store = _load_auth_store()
+            if store is not None and auth.authenticate(store, username, password):
+                st.session_state["authenticated"] = True
+                st.session_state["auth_user"] = username.strip()
+                st.session_state["login_attempts"] = 0
+                st.session_state["login_locked_until"] = 0.0
+                st.rerun()
+            else:
+                attempts = st.session_state.get("login_attempts", 0) + 1
+                if attempts >= MAX_LOGIN_ATTEMPTS:
+                    st.session_state["login_locked_until"] = (
+                        time.time() + LOGIN_LOCKOUT_SECONDS
+                    )
+                    st.session_state["login_attempts"] = 0
+                else:
+                    st.session_state["login_attempts"] = attempts
+                st.error("Username atau password salah.")
+        st.markdown(
+            '<div class="idn-auth-note">Sesi berakhir saat tab ditutup atau server di-restart. '
+            "Kredensial disimpan sebagai hash PBKDF2 di configs/users.json.</div>",
+            unsafe_allow_html=True,
+        )
+
+
+def _require_authentication() -> bool:
+    """Render the auth gate and return True only for an authenticated session."""
+    if st.session_state.get("authenticated") and st.session_state.get("auth_user"):
+        return True
+    store = _load_auth_store()
+    if store is None:
+        return False
+    if auth.user_count(store) == 0:
+        _render_setup_page()
+    else:
+        _render_login_page()
+    return False
+
+
 def main() -> None:
-    st.set_page_config(page_title="NEZU · Decision Workspace", page_icon="◈", layout="wide")
+    st.set_page_config(
+        page_title="IDN Maker FINRLAB · NEZU", page_icon="◈", layout="wide"
+    )
     st.markdown(NEZU_CSS, unsafe_allow_html=True)
+    if not _require_authentication():
+        return
     with st.sidebar:
         st.markdown(
             """
@@ -2379,6 +2575,15 @@ def main() -> None:
             <div class="nezu-side-label">ACTIVE EXPERIMENT</div>
             """,
             unsafe_allow_html=True,
+        )
+        st.markdown('<div class="nezu-side-label">SESSION</div>', unsafe_allow_html=True)
+        st.caption(f"Masuk sebagai {st.session_state.get('auth_user', '-')}")
+        st.button(
+            "Keluar",
+            key="logout_button",
+            icon=":material/logout:",
+            use_container_width=True,
+            on_click=_logout,
         )
     try:
         config = build_config()

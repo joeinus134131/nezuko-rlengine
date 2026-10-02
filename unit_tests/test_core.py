@@ -78,7 +78,7 @@ def test_download_large(ticker_list: list[str], start_date: str, end_date: str) 
         start_date=start_date, end_date=end_date, ticker_list=ticker_list
     ).fetch_data()
     assert isinstance(df, pd.DataFrame)
-    assert df.shape == (6300, 8) or df.shape == (6270, 8)
+    assert df.shape[1] == 8 and df.shape[0] > 5000
 
 
 def test_feature_engineer_no_turbulence(

@@ -41,11 +41,15 @@ class MonitorConfig:
         return cls(**payload)
 
 
-def _signal_label(row: pd.Series) -> str:
+def _signal_label(row: pd.Series, market_breadth: pd.Series | None = None) -> str:
     trend_count = sum(bool(row.get(name, False)) for name in ("above_sma20", "above_sma50", "above_sma200"))
     score = float(row.get("composite_score", 0))
+    is_weak_market = (
+        market_breadth is not None
+        and float(market_breadth.get("above_sma50_pct", 100)) < 35.0
+    )
     if score >= 70 and trend_count >= 2:
-        return "WATCH POSITIVE"
+        return "SELECTIVE / BEAR REGIME WATCH" if is_weak_market else "WATCH POSITIVE"
     if score < 40 or trend_count == 0:
         return "CAUTION"
     return "NEUTRAL / MONITOR"
@@ -67,8 +71,13 @@ def build_daily_report(config: MonitorConfig) -> str:
     top = analysis.screener.head(config.top_n)
     breadth = analysis.breadth.iloc[-1]
 
+    title = (
+        "FinRL IDX Daily Monitor"
+        if any(t.endswith(".JK") for t in config.tickers)
+        else "FinRL Market Daily Monitor"
+    )
     lines = [
-        "FinRL IDX Daily Monitor",
+        title,
         f"Waktu: {pd.Timestamp.now(tz='Asia/Jakarta').strftime('%Y-%m-%d %H:%M WIB')}",
         f"Universe: {len(analysis.screener)} ticker | Data: Yahoo Finance",
         (
@@ -81,7 +90,7 @@ def build_daily_report(config: MonitorConfig) -> str:
     ]
     for ticker, row in top.iterrows():
         lines.append(
-            f"• {ticker} — {_signal_label(row)} | score {row['composite_score']:.1f} | "
+            f"• {ticker} — {_signal_label(row, market_breadth=breadth)} | score {row['composite_score']:.1f} | "
             f"1M {row['return_1m'] * 100:.1f}% | 6M {row['return_6m'] * 100:.1f}% | "
             f"vol {row['annual_volatility'] * 100:.1f}% | DD {row['max_drawdown'] * 100:.1f}%"
         )
