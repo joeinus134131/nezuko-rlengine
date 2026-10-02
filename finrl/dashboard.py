@@ -345,6 +345,89 @@ def _render_page_header(page: str) -> None:
     )
 
 
+def notify_success(message: str, banner: bool = True, title: str | None = None) -> None:
+    toast_msg = f"{title}: {message}" if title else message
+    toast_popup = toast_msg[:117] + "..." if len(toast_msg) > 120 else toast_msg
+    try:
+        st.toast(toast_popup, icon="✅")
+    except Exception:
+        pass
+    if banner:
+        st.success(f"**{title}**: {message}" if title else message)
+
+
+def notify_warning(message: str, banner: bool = True, title: str | None = None) -> None:
+    toast_msg = f"{title}: {message}" if title else message
+    toast_popup = toast_msg[:117] + "..." if len(toast_msg) > 120 else toast_msg
+    try:
+        st.toast(toast_popup, icon="⚠️")
+    except Exception:
+        pass
+    if banner:
+        st.warning(f"**{title}**: {message}" if title else message)
+
+
+def notify_info(message: str, banner: bool = True, title: str | None = None) -> None:
+    toast_msg = f"{title}: {message}" if title else message
+    toast_popup = toast_msg[:117] + "..." if len(toast_msg) > 120 else toast_msg
+    try:
+        st.toast(toast_popup, icon="ℹ️")
+    except Exception:
+        pass
+    if banner:
+        st.info(f"**{title}**: {message}" if title else message)
+
+
+def notify_error(
+    message: str | Exception,
+    banner: bool = True,
+    title: str | None = None,
+    details: str | None = None,
+) -> None:
+    if isinstance(message, Exception):
+        raw_text = str(message)
+        if not details:
+            import traceback
+
+            tb = traceback.format_exc()
+            if tb and tb.strip() != "NoneType: None":
+                details = tb
+            else:
+                details = f"{type(message).__name__}: {raw_text}"
+    else:
+        raw_text = str(message)
+
+    if "Connection refused" in raw_text or "Errno 61" in raw_text or "Errno 111" in raw_text:
+        summary = "Router tidak dapat dihubungi (Connection refused). Pastikan service router sedang aktif dan Base URL benar."
+    elif "401" in raw_text or "Unauthorized" in raw_text:
+        summary = "Akses ditolak (401 Unauthorized). Periksa API key atau kredensial Anda."
+    elif "403" in raw_text or "Forbidden" in raw_text:
+        summary = "Akses dilarang (403 Forbidden). Izin model atau kuota habis."
+    elif "404" in raw_text or "Not Found" in raw_text:
+        summary = "Endpoint tidak ditemukan (404 Not Found). Periksa kembali Base URL."
+    elif "timed out" in raw_text.lower() or "timeout" in raw_text.lower():
+        summary = "Koneksi time out. Server tujuan merespons terlalu lambat."
+    elif "nodename nor servname provided" in raw_text or "getaddrinfo failed" in raw_text:
+        summary = "Gagal menyelesaikan domain/host (DNS Error). Periksa koneksi internet dan Base URL."
+    else:
+        summary = raw_text
+
+    toast_msg = f"{title}: {summary}" if title else summary
+    toast_popup = toast_msg[:117] + "..." if len(toast_msg) > 120 else toast_msg
+    try:
+        st.toast(toast_popup, icon="🚨")
+    except Exception:
+        pass
+
+    if banner:
+        banner_msg = f"**{title}**: {summary}" if title else summary
+        st.error(banner_msg)
+        technical_detail = details or (raw_text if raw_text != summary or len(raw_text) > 80 else None)
+        if technical_detail:
+            with st.expander("Detail teknis"):
+                st.code(technical_detail, language="text")
+
+
 def _status_card(label: str, value: str, note: str) -> str:
     return (
         '<div class="nezu-status-card">'
@@ -381,6 +464,14 @@ def _data_kwargs(source: str, api_key: str = "", api_secret: str = "", api_url: 
 
 
 def _read_json_config(name: str) -> dict[str, Any] | None:
+    try:
+        from finrl.db.bridge import read_app_config
+
+        value = read_app_config(name, CONFIG_DIR)
+        if value is not None:
+            return value
+    except Exception:
+        pass
     path = CONFIG_DIR / name
     if not path.exists():
         return None
@@ -392,6 +483,16 @@ def _read_json_config(name: str) -> dict[str, Any] | None:
 
 
 def _write_json_config(name: str, payload: dict[str, Any]) -> Path:
+    try:
+        from finrl.db.bridge import write_app_config
+
+        result = write_app_config(name, payload, CONFIG_DIR)
+        # write_app_config returns display string when DB active; resolve real path.
+        if "PostgreSQL" not in result:
+            return Path(result)
+        return CONFIG_DIR / name
+    except Exception:
+        pass
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     path = CONFIG_DIR / name
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -517,7 +618,7 @@ def build_config() -> ExperimentConfig:
                 _apply_config_payload(payload)
                 st.rerun()
             except (ValueError, UnicodeDecodeError, json.JSONDecodeError) as error:
-                st.error(f"Konfigurasi gagal dimuat: {error}")
+                notify_error(error, title="Gagal Memuat Konfigurasi")
         if st.session_state.get("loaded_config_name"):
             st.success(f"Config aktif: {st.session_state['loaded_config_name']}")
 
@@ -555,11 +656,20 @@ def build_config() -> ExperimentConfig:
                 "API_BASE_URL": source_api_url,
             }
         elif source == "licensed_provider":
-            from finrl.integrations.provider_adapter import load_provider_store
+            try:
+                from finrl.db.bridge import load_provider_store as load_provider_bridge
 
+                provider_store = load_provider_bridge(CONFIG_DIR)
+            except Exception:
+                from finrl.integrations.provider_adapter import load_provider_store
+
+                provider_path = CONFIG_DIR / "providers.json"
+                try:
+                    provider_store = load_provider_store(provider_path)
+                except (OSError, ValueError, json.JSONDecodeError):
+                    provider_store = {"active_market_data": ""}
             provider_path = CONFIG_DIR / "providers.json"
             try:
-                provider_store = load_provider_store(provider_path)
                 active_provider = provider_store.get("active_market_data", "")
             except (OSError, ValueError, json.JSONDecodeError):
                 active_provider = ""
@@ -920,9 +1030,9 @@ def show_data(config: ExperimentConfig, source_kwargs: dict[str, str]) -> None:
                     config.use_vix, tuple(sorted(source_kwargs.items())),
                 )
             st.session_state["market_data"] = data
-            st.success(f"{len(data):,} baris siap digunakan untuk eksperimen.")
+            notify_success(f"{len(data):,} baris siap digunakan untuk eksperimen.")
         except Exception as error:
-            st.exception(error)
+            notify_error(error, title="Gagal Memuat Data")
     data = st.session_state.get("market_data")
     if data is not None:
         date_col = "timestamp" if "timestamp" in data.columns else "date"
@@ -971,21 +1081,21 @@ def show_data(config: ExperimentConfig, source_kwargs: dict[str, str]) -> None:
 
 def show_provider_hub(config: ExperimentConfig) -> None:
     """Configure and compare research, licensed, and broker quote sources."""
+    from finrl.db.bridge import load_provider_store as load_provider_bridge
+    from finrl.db.bridge import save_provider_store as save_provider_bridge
     from finrl.integrations.provider_adapter import GenericRESTProvider
     from finrl.integrations.provider_adapter import ProviderProfile
-    from finrl.integrations.provider_adapter import load_provider_store
-    from finrl.integrations.provider_adapter import save_provider_store
     from finrl.integrations.provider_adapter import yahoo_research_quote
     from finrl.integrations.secure_store import save_secret
 
     path = CONFIG_DIR / "providers.json"
     try:
-        store = load_provider_store(path)
+        store = load_provider_bridge(CONFIG_DIR)
         profiles = [
             ProviderProfile.from_dict(item) for item in store.get("providers", [])
         ]
     except Exception as error:
-        st.error(f"Konfigurasi provider tidak dapat dibaca: {error}")
+        notify_error(error, title="Konfigurasi Provider Error")
         return
     by_id = {profile.id: profile for profile in profiles}
 
@@ -1024,8 +1134,8 @@ def show_provider_hub(config: ExperimentConfig) -> None:
         if st.button("Simpan source priority", use_container_width=True):
             store["active_market_data"] = active_market
             store["active_broker"] = active_broker
-            save_provider_store(path, store)
-            st.success("Source priority tersimpan.")
+            save_provider_bridge(CONFIG_DIR, store)
+            notify_success("Source priority tersimpan (PostgreSQL + file mirror).")
 
         include_yahoo = st.toggle(
             "Sertakan Yahoo sebagai pembanding research", value=True,
@@ -1087,10 +1197,10 @@ def show_provider_hub(config: ExperimentConfig) -> None:
         if active_broker and st.button("Uji account broker (read-only)"):
             try:
                 account = GenericRESTProvider(by_id[active_broker]).get_account()
-                st.success("Autentikasi account broker berhasil.")
+                notify_success("Autentikasi account broker berhasil.")
                 st.json(account)
             except Exception as error:
-                st.error(str(error))
+                notify_error(error, title="Autentikasi Broker Gagal")
         st.info(
             "Order placement sengaja belum tersedia. Aktivasi order memerlukan adapter "
             "khusus vendor, sandbox, idempotency key, pre-trade limits, audit trail, "
@@ -1231,15 +1341,15 @@ def show_provider_hub(config: ExperimentConfig) -> None:
                 ]
                 items.append(asdict(profile))
                 store["providers"] = items
-                save_provider_store(path, store)
+                save_provider_bridge(CONFIG_DIR, store)
                 if secret_value:
                     if not profile.secret_name:
                         raise ValueError("Credential vault key wajib diisi untuk menyimpan token.")
                     save_secret(profile.secret_name, secret_value)
-                st.success(f"Profile {profile.name} tersimpan tanpa menulis secret ke JSON.")
+                notify_success(f"Profile {profile.name} tersimpan tanpa menulis secret ke JSON.")
                 st.rerun()
             except Exception as error:
-                st.error(str(error))
+                notify_error(error, title="Gagal Menyimpan Profile")
 
     with architecture_tab:
         st.graphviz_chart(
@@ -1294,7 +1404,7 @@ def show_idx_analysis(config: ExperimentConfig) -> None:
     try:
         analysis = build_idx_analysis(data, risk_free_rate=config.risk_free_rate)
     except Exception as error:
-        st.exception(error)
+        notify_error(error, title="Gagal Menjalankan Analisis IDX")
         return
 
     screener = analysis.screener.copy()
@@ -1398,12 +1508,12 @@ def show_training(config: ExperimentConfig, source_kwargs: dict[str, str]) -> No
         try:
             with st.spinner("Training sedang berjalan..."):
                 st.session_state["trained_model"] = run_training(config, source_kwargs)
-            st.success(f"Training selesai. Artefak tersedia di {config.model_path}.")
+            notify_success(f"Training selesai. Artefak tersedia di {config.model_path}.")
             manifest_path = st.session_state.get("model_manifest_path")
             if manifest_path:
                 st.caption(f"Konfigurasi model disimpan di {manifest_path}")
         except Exception as error:
-            st.exception(error)
+            notify_error(error, title="Training Gagal")
 
 
 def show_backtest(config: ExperimentConfig, source_kwargs: dict[str, str]) -> None:
@@ -1448,9 +1558,9 @@ def show_backtest(config: ExperimentConfig, source_kwargs: dict[str, str]) -> No
             with st.spinner("Memvalidasi artefak model..."):
                 _verify_model_load(config, artifact)
             st.session_state["loaded_model_path"] = str(artifact)
-            st.success("Model berhasil dimuat dan dipilih sebagai model aktif.")
+            notify_success("Model berhasil dimuat dan dipilih sebagai model aktif.")
         except Exception as error:
-            st.exception(error)
+            notify_error(error, title="Gagal Memuat Model")
 
     model_ready = st.session_state.get("loaded_model_path") == str(artifact)
     with test_col:
@@ -1465,9 +1575,9 @@ def show_backtest(config: ExperimentConfig, source_kwargs: dict[str, str]) -> No
                 values = run_backtest(config, source_kwargs)
             st.session_state["equity_curve"] = values
             st.session_state["loaded_model_path"] = str(artifact)
-            st.success("Evaluasi out-of-sample selesai.")
+            notify_success("Evaluasi out-of-sample selesai.")
         except Exception as error:
-            st.exception(error)
+            notify_error(error, title="Evaluasi Gagal")
 
     if model_ready:
         st.caption("Model aktif telah melewati validasi loader pada sesi ini.")
@@ -1668,11 +1778,11 @@ def show_ai_research(config: ExperimentConfig) -> None:
                     models = list_models(base_url, api_key)
                 st.session_state["ai_available_models"] = models
                 if models:
-                    st.success(f"Router terhubung. {len(models)} model tersedia.")
+                    notify_success(f"Router terhubung. {len(models)} model tersedia.")
                 else:
-                    st.warning("Router terhubung, tetapi daftar model kosong.")
+                    notify_warning("Router terhubung, tetapi daftar model kosong.")
             except Exception as error:
-                st.exception(error)
+                notify_error(error, title="Koneksi AI Router Gagal")
 
         available_models = st.session_state.get("ai_available_models", [])
         if available_models:
@@ -1736,25 +1846,25 @@ def show_ai_research(config: ExperimentConfig) -> None:
         )
         st.session_state["ai_saved_model"] = model
         st.session_state["ai_saved_fallbacks"] = fallback_models
-        st.success(f"Profil disimpan di {path} (tanpa API key).")
+        notify_success(f"Profil disimpan di {path} (tanpa API key).")
     if save_key_col.button("Simpan API key ke secure vault", use_container_width=True):
         try:
             save_secret("ai_router_api_key", api_key)
-            st.success("API key AI router tersimpan di credential vault OS.")
+            notify_success("API key AI router tersimpan di credential vault OS.")
         except Exception as error:
-            st.error(f"API key gagal disimpan: {error}")
+            notify_error(error, title="Gagal Menyimpan API Key")
     ticker = st.selectbox("Ticker fokus", config.tickers, key="ai_ticker")
     if st.button("Muat fundamental & berita Yahoo Finance", use_container_width=True):
         try:
             with st.spinner("Mengambil snapshot perusahaan dan headline..."):
                 st.session_state["ai_company_context"] = load_company_research_context(ticker)
             context_loaded = st.session_state["ai_company_context"]
-            st.success(
+            notify_success(
                 f"Snapshot dimuat: {len(context_loaded['fundamentals'])} field fundamental, "
                 f"{len(context_loaded['news'])} headline."
             )
         except Exception as error:
-            st.exception(error)
+            notify_error(error, title="Gagal Memuat Fundamental & Berita")
     company_context = st.session_state.get("ai_company_context")
     if company_context and company_context.get("ticker") == ticker:
         with st.expander("Snapshot Yahoo Finance yang aktif"):
@@ -1836,26 +1946,30 @@ katakan bahwa analisis berita/fundamental terbaru tidak dapat disimpulkan.
             }
             st.session_state.setdefault("ai_research_history", []).append(entry)
             if failures:
-                st.warning(
+                notify_warning(
                     "Model utama gagal; fallback berhasil. Percobaan sebelumnya: "
                     + " | ".join(failures)
                 )
+            else:
+                notify_success(f"Analisis AI selesai menggunakan {response.model}.")
         except RouterHTTPError as error:
             if error.status_code == 403:
-                st.error(
+                notify_error(
                     "Provider menolak akses model (HTTP 403). Periksa koneksi akun/provider, "
                     "izin model, dan kuota di dashboard 9Router. Pilih model lain atau "
-                    "konfigurasikan fallback combo."
+                    "konfigurasikan fallback combo.",
+                    title="Akses AI Router Ditolak (403)",
+                    details=error.detail[:2000] if error.detail else None,
                 )
             else:
-                st.error(
+                notify_error(
                     f"AI router gagal (HTTP {error.status_code}). Coba model/provider lain "
-                    "atau periksa status dan kuota router."
+                    "atau periksa status dan kuota router.",
+                    title=f"AI Router Error ({error.status_code})",
+                    details=error.detail[:2000] if error.detail else None,
                 )
-            with st.expander("Detail teknis router"):
-                st.code(error.detail[:2000], language="text")
         except Exception as error:
-            st.error(f"AI router tidak dapat menyelesaikan request: {error}")
+            notify_error(error, title="AI Router Gagal")
 
     history = st.session_state.get("ai_research_history", [])
     if history:
@@ -1965,26 +2079,26 @@ def show_paper_trading(config: ExperimentConfig) -> None:
             if save_credentials:
                 save_secret("alpaca_paper_api_key", api_key)
                 save_secret("alpaca_paper_api_secret", api_secret)
-            st.success(f"Konfigurasi paper trading disimpan di {path}.")
+            notify_success(f"Konfigurasi paper trading disimpan di {path}.")
         except Exception as error:
-            st.error(f"Konfigurasi gagal disimpan: {error}")
+            notify_error(error, title="Gagal Menyimpan Konfigurasi")
     if test_connection:
         try:
             normalized_api_url, account = validate_alpaca_paper_connection(
                 api_key, api_secret, api_url
             )
             account_status = getattr(account, "status", "terhubung")
-            st.success(
+            notify_success(
                 f"Koneksi read-only berhasil. Status account: {account_status}. "
                 f"Endpoint dinormalisasi menjadi {normalized_api_url}."
             )
         except PermissionError as error:
-            st.error(str(error))
+            notify_error(error, title="Izin Paper Trading Ditolak")
         except (ValueError, ConnectionError) as error:
-            st.error(str(error))
+            notify_error(error, title="Koneksi / Parameter Gagal")
     if submitted:
         if not confirmed:
-            st.error("Konfirmasi paper trading terlebih dahulu.")
+            notify_warning("Konfirmasi paper trading terlebih dahulu.")
             return
         try:
             normalized_api_url = normalize_alpaca_paper_url(api_url)
@@ -2012,11 +2126,11 @@ def show_paper_trading(config: ExperimentConfig) -> None:
                     action_dim=int(action_dim),
                 )
         except PermissionError as error:
-            st.error(str(error))
+            notify_error(error, title="Izin Paper Trading Ditolak")
         except (ValueError, ConnectionError) as error:
-            st.error(str(error))
+            notify_error(error, title="Koneksi / Parameter Paper Trading Gagal")
         except Exception as error:
-            st.exception(error)
+            notify_error(error, title="Paper Trading Gagal")
 
 
 def _monitor_pid() -> int | None:
@@ -2119,9 +2233,9 @@ def show_monitoring(config: ExperimentConfig) -> None:
             pd.to_datetime(daily_time, format="%H:%M")
             save_secret("telegram_bot_token", bot_token)
             path = _write_json_config("telegram_monitor.json", monitor_payload)
-            st.success(f"Konfigurasi disimpan di {path}; token berada di secure vault.")
+            notify_success(f"Konfigurasi disimpan di {path}; token berada di secure vault.")
         except Exception as error:
-            st.error(f"Konfigurasi monitoring gagal disimpan: {error}")
+            notify_error(error, title="Gagal Menyimpan Konfigurasi Monitoring")
     if test_col.button("Kirim pesan tes", use_container_width=True):
         try:
             send_telegram_message(
@@ -2129,9 +2243,9 @@ def show_monitoring(config: ExperimentConfig) -> None:
                 chat_id,
                 "NEZU: koneksi notifikasi Telegram berhasil.",
             )
-            st.success("Pesan tes berhasil dikirim.")
+            notify_success("Pesan tes berhasil dikirim.")
         except Exception as error:
-            st.error(f"Pesan tes gagal: {error}")
+            notify_error(error, title="Pesan Tes Gagal")
 
     st.markdown("### 2. Preview dan eksekusi")
     if st.button("Bangun preview laporan", use_container_width=True):
@@ -2140,16 +2254,16 @@ def show_monitoring(config: ExperimentConfig) -> None:
                 preview = build_daily_report(MonitorConfig(**monitor_payload))
             st.session_state["monitor_preview"] = preview
         except Exception as error:
-            st.error(f"Preview gagal dibuat: {error}")
+            notify_error(error, title="Preview Gagal Dibuat")
     preview = st.session_state.get("monitor_preview")
     if preview:
         st.code(preview, language="text")
         if st.button("Kirim laporan sekarang", type="primary", use_container_width=True):
             try:
                 send_telegram_message(bot_token, chat_id, preview)
-                st.success("Laporan berhasil dikirim ke Telegram.")
+                notify_success("Laporan berhasil dikirim ke Telegram.")
             except Exception as error:
-                st.error(f"Pengiriman gagal: {error}")
+                notify_error(error, title="Pengiriman Gagal")
 
     st.markdown("### 3. Standby monitor")
     pid = _monitor_pid()
@@ -2160,10 +2274,10 @@ def show_monitoring(config: ExperimentConfig) -> None:
             try:
                 os.kill(pid, signal.SIGTERM)
                 (CONFIG_DIR / "telegram_monitor.pid").unlink(missing_ok=True)
-                st.success("Monitor dihentikan.")
+                notify_success("Monitor dihentikan.")
                 st.rerun()
             except OSError as error:
-                st.error(f"Monitor gagal dihentikan: {error}")
+                notify_error(error, title="Monitor Gagal Dihentikan")
     else:
         if action_col.button("Mulai standby monitor", type="primary", use_container_width=True):
             try:
@@ -2192,10 +2306,10 @@ def show_monitoring(config: ExperimentConfig) -> None:
                 (CONFIG_DIR / "telegram_monitor.pid").write_text(
                     str(process.pid), encoding="utf-8"
                 )
-                st.success(f"Standby monitor aktif (PID {process.pid}).")
+                notify_success(f"Standby monitor aktif (PID {process.pid}).")
                 st.rerun()
             except Exception as error:
-                st.error(f"Monitor gagal dimulai: {error}")
+                notify_error(error, title="Monitor Gagal Dimulai")
     st.caption(f"Log monitor: {LOG_DIR / 'telegram-monitor.log'}")
 
 
@@ -2442,10 +2556,18 @@ def _auth_hero(subtitle: str, badge: str = "SECURE ACCESS") -> str:
 
 def _load_auth_store() -> dict[str, Any] | None:
     try:
-        return auth.load_users(AUTH_USERS_PATH)
+        from finrl.db.bridge import load_auth_store
+
+        return load_auth_store(CONFIG_DIR)
     except auth.AuthError as error:
         st.error(f"Penyimpanan user bermasalah: {error}")
         return None
+    except Exception:
+        try:
+            return auth.load_users(AUTH_USERS_PATH)
+        except auth.AuthError as error:
+            st.error(f"Penyimpanan user bermasalah: {error}")
+            return None
 
 
 def _logout() -> None:
@@ -2472,14 +2594,17 @@ def _render_setup_page() -> None:
             )
         if submitted:
             if password != confirm:
-                st.error("Konfirmasi password tidak sama.")
+                notify_error("Konfirmasi password tidak sama.", title="Validasi Gagal")
                 return
             try:
-                store = auth.load_users(AUTH_USERS_PATH)
-                auth.create_user(store, username, password, role="admin")
-                auth.save_users(AUTH_USERS_PATH, store)
+                from finrl.db.bridge import create_user_bridge
+
+                create_user_bridge(CONFIG_DIR, username, password, role="admin")
             except auth.AuthError as error:
-                st.error(str(error))
+                notify_error(str(error), title="Gagal Membuat Akun")
+                return
+            except Exception as error:
+                notify_error(f"Gagal membuat akun: {error}", title="Gagal Membuat Akun")
                 return
             st.session_state["authenticated"] = True
             st.session_state["auth_user"] = username.strip()
@@ -2498,8 +2623,9 @@ def _render_login_page() -> None:
         remaining = st.session_state.get("login_locked_until", 0.0) - time.time()
         locked = remaining > 0
         if locked:
-            st.warning(
-                f"Terlalu banyak percobaan. Coba lagi dalam {int(remaining) + 1} detik."
+            notify_warning(
+                f"Terlalu banyak percobaan. Coba lagi dalam {int(remaining) + 1} detik.",
+                title="Akun Terkunci Sementara",
             )
         with st.form("idn_maker_login"):
             username = st.text_input("Username")
@@ -2508,8 +2634,14 @@ def _render_login_page() -> None:
                 "Masuk", type="primary", use_container_width=True, disabled=locked
             )
         if submitted and not locked:
-            store = _load_auth_store()
-            if store is not None and auth.authenticate(store, username, password):
+            try:
+                from finrl.db.bridge import authenticate_bridge
+
+                ok = authenticate_bridge(CONFIG_DIR, username, password)
+            except Exception:
+                store = _load_auth_store()
+                ok = store is not None and auth.authenticate(store, username, password)
+            if ok:
                 st.session_state["authenticated"] = True
                 st.session_state["auth_user"] = username.strip()
                 st.session_state["login_attempts"] = 0
@@ -2524,10 +2656,10 @@ def _render_login_page() -> None:
                     st.session_state["login_attempts"] = 0
                 else:
                     st.session_state["login_attempts"] = attempts
-                st.error("Username atau password salah.")
+                notify_error("Username atau password salah.", title="Login Gagal")
         st.markdown(
             '<div class="idn-auth-note">Sesi berakhir saat tab ditutup atau server di-restart. '
-            "Kredensial disimpan sebagai hash PBKDF2 di configs/users.json.</div>",
+            "Kredensial disimpan sebagai hash PBKDF2 di PostgreSQL (fallback configs/users.json).</div>",
             unsafe_allow_html=True,
         )
 
@@ -2536,10 +2668,21 @@ def _require_authentication() -> bool:
     """Render the auth gate and return True only for an authenticated session."""
     if st.session_state.get("authenticated") and st.session_state.get("auth_user"):
         return True
-    store = _load_auth_store()
-    if store is None:
+    try:
+        from finrl.db.bridge import user_count_bridge
+
+        count = user_count_bridge(CONFIG_DIR)
+    except Exception:
+        store = _load_auth_store()
+        if store is None:
+            return False
+        count = auth.user_count(store)
+        if count == 0:
+            _render_setup_page()
+        else:
+            _render_login_page()
         return False
-    if auth.user_count(store) == 0:
+    if count == 0:
         _render_setup_page()
     else:
         _render_login_page()
