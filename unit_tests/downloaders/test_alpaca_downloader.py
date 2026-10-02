@@ -18,6 +18,8 @@ def ticker_list():
 
 
 def test_intraDayBar_download(ticker_list):
+    if API_KEY == "???" or API_SECRET == "???":
+        pytest.skip("Valid Alpaca credentials required for live Alpaca tests.")
     # Given
     start_date = "2021-07-29"
     end_date = "2021-07-30"
@@ -69,6 +71,8 @@ def test_intraDayBar_download(ticker_list):
 
 
 def test_dayBar_download(ticker_list):
+    if API_KEY == "???" or API_SECRET == "???":
+        pytest.skip("Valid Alpaca credentials required for live Alpaca tests.")
     # Given
     start_date = "2021-07-29"
     end_date = "2021-07-30"

@@ -3,6 +3,7 @@
 
 # remove DS_Store
 **/.DS_Store
+.commandcode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -108,7 +109,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-# .env
+.env
 .venv/
 .venv311/
 # env/

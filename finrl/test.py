@@ -68,6 +68,9 @@ def test(
         "turbulence_array": turbulence_array,
         "if_train": False,
     }
+    for opt in ("buy_cost_pct", "sell_cost_pct", "lot_size", "stop_loss_pct", "initial_capital"):
+        if opt in kwargs:
+            env_config[opt] = kwargs[opt]
     env_instance = env(config=env_config)
 
     # load elegantrl needs state dim, action dim and net dim

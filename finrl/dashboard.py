@@ -9,8 +9,10 @@ import os
 import signal
 import subprocess
 import sys
+import time
 from dataclasses import asdict
 from dataclasses import dataclass
+from dataclasses import MISSING
 from html import escape
 from pathlib import Path
 from typing import Any
@@ -33,6 +35,7 @@ from finrl.config import INDICATORS
 from finrl.config_tickers import DOW_30_TICKER
 from finrl.config_tickers import LQ45_TICKER
 from finrl.config_tickers import SRI_KEHATI_TICKER
+from finrl.integrations import auth
 from finrl.meta.data_processor import DataProcessor
 from finrl.meta.env_stock_trading.env_stocktrading_np import StockTradingEnv
 
@@ -274,6 +277,10 @@ class ExperimentConfig:
     agent_params: dict[str, Any]
     universe: str
     risk_free_rate: float
+    buy_cost_pct: float = 0.0016
+    sell_cost_pct: float = 0.0035
+    lot_size: int = 100
+    stop_loss_pct: float = 0.0
 
 
 def _go_to(page: str) -> None:
@@ -339,6 +346,96 @@ def _render_page_header(page: str) -> None:
     )
 
 
+def notify_success(message: str, banner: bool = True, title: str | None = None) -> None:
+    toast_msg = f"{title}: {message}" if title else message
+    toast_popup = toast_msg[:117] + "..." if len(toast_msg) > 120 else toast_msg
+    try:
+        st.toast(toast_popup, icon="✅")
+    except Exception:
+        pass
+    if banner:
+        st.success(f"**{title}**: {message}" if title else message)
+
+
+def notify_warning(message: str, banner: bool = True, title: str | None = None) -> None:
+    toast_msg = f"{title}: {message}" if title else message
+    toast_popup = toast_msg[:117] + "..." if len(toast_msg) > 120 else toast_msg
+    try:
+        st.toast(toast_popup, icon="⚠️")
+    except Exception:
+        pass
+    if banner:
+        st.warning(f"**{title}**: {message}" if title else message)
+
+
+def notify_info(message: str, banner: bool = True, title: str | None = None) -> None:
+    toast_msg = f"{title}: {message}" if title else message
+    toast_popup = toast_msg[:117] + "..." if len(toast_msg) > 120 else toast_msg
+    try:
+        st.toast(toast_popup, icon="ℹ️")
+    except Exception:
+        pass
+    if banner:
+        st.info(f"**{title}**: {message}" if title else message)
+
+
+def notify_error(
+    message: str | Exception,
+    banner: bool = True,
+    title: str | None = None,
+    details: str | None = None,
+) -> None:
+    if isinstance(message, Exception):
+        raw_text = str(message)
+        if not details:
+            import traceback
+
+            tb = traceback.format_exc()
+            if tb and tb.strip() != "NoneType: None":
+                details = tb
+            else:
+                details = f"{type(message).__name__}: {raw_text}"
+    else:
+        raw_text = str(message)
+
+    if "Connection refused" in raw_text or "Errno 61" in raw_text or "Errno 111" in raw_text:
+        summary = "Router tidak dapat dihubungi (Connection refused). Pastikan service router sedang aktif dan Base URL benar."
+    elif "401" in raw_text or "Unauthorized" in raw_text:
+        summary = "Akses ditolak (401 Unauthorized). Periksa API key atau kredensial Anda."
+    elif "403" in raw_text or "Forbidden" in raw_text:
+        summary = "Akses dilarang (403 Forbidden). Izin model atau kuota habis."
+    elif "404" in raw_text or "Not Found" in raw_text:
+        summary = "Endpoint tidak ditemukan (404 Not Found). Periksa kembali Base URL."
+    elif "timed out" in raw_text.lower() or "timeout" in raw_text.lower():
+        summary = "Koneksi time out. Server tujuan merespons terlalu lambat."
+    elif "nodename nor servname provided" in raw_text or "getaddrinfo failed" in raw_text:
+        summary = "Gagal menyelesaikan domain/host (DNS Error). Periksa koneksi internet dan Base URL."
+    else:
+        summary = raw_text
+
+    toast_msg = f"{title}: {summary}" if title else summary
+    toast_popup = toast_msg[:117] + "..." if len(toast_msg) > 120 else toast_msg
+    try:
+        st.toast(toast_popup, icon="🚨")
+    except Exception:
+        pass
+
+    if banner:
+        banner_msg = f"**{title}**: {summary}" if title else summary
+        st.error(banner_msg)
+        technical_detail = details or (raw_text if raw_text != summary or len(raw_text) > 80 else None)
+        if technical_detail:
+            try:
+                with st.expander("Detail teknis"):
+                    st.code(technical_detail, language="text")
+            except Exception:
+                safe_detail = escape(technical_detail)
+                st.markdown(
+                    f"<details style='margin-top:8px;'><summary style='cursor:pointer;font-weight:600;font-size:0.85rem;color:var(--nezu-ink-muted);'>Detail teknis</summary><pre style='white-space:pre-wrap;font-size:0.78rem;background:var(--nezu-muted);padding:8px;border-radius:6px;margin-top:4px;'>{safe_detail}</pre></details>",
+                    unsafe_allow_html=True,
+                )
+
+
 def _status_card(label: str, value: str, note: str) -> str:
     return (
         '<div class="nezu-status-card">'
@@ -375,6 +472,14 @@ def _data_kwargs(source: str, api_key: str = "", api_secret: str = "", api_url: 
 
 
 def _read_json_config(name: str) -> dict[str, Any] | None:
+    try:
+        from finrl.db.bridge import read_app_config
+
+        value = read_app_config(name, CONFIG_DIR)
+        if value is not None:
+            return value
+    except Exception:
+        pass
     path = CONFIG_DIR / name
     if not path.exists():
         return None
@@ -386,6 +491,16 @@ def _read_json_config(name: str) -> dict[str, Any] | None:
 
 
 def _write_json_config(name: str, payload: dict[str, Any]) -> Path:
+    try:
+        from finrl.db.bridge import write_app_config
+
+        result = write_app_config(name, payload, CONFIG_DIR)
+        # write_app_config returns display string when DB active; resolve real path.
+        if "PostgreSQL" not in result:
+            return Path(result)
+        return CONFIG_DIR / name
+    except Exception:
+        pass
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     path = CONFIG_DIR / name
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -394,7 +509,15 @@ def _write_json_config(name: str, payload: dict[str, Any]) -> Path:
 
 def _apply_config_payload(payload: dict[str, Any]) -> None:
     """Apply a downloaded experiment config before widgets are instantiated."""
-    required = {field.name for field in ExperimentConfig.__dataclass_fields__.values()}
+    payload = dict(payload)
+    for field_name, field in ExperimentConfig.__dataclass_fields__.items():
+        if field_name not in payload and field.default is not MISSING:
+            payload[field_name] = field.default
+
+    required = {
+        field_name for field_name, field in ExperimentConfig.__dataclass_fields__.items()
+        if field.default is MISSING and field.default_factory is MISSING
+    }
     missing = required.difference(payload)
     if missing:
         raise ValueError(f"Field konfigurasi belum lengkap: {', '.join(sorted(missing))}")
@@ -423,6 +546,10 @@ def _apply_config_payload(payload: dict[str, Any]) -> None:
     st.session_state[f"params_{library}"] = json.dumps(
         payload["agent_params"], indent=2, ensure_ascii=False
     )
+    st.session_state["cfg_buy_cost"] = float(payload.get("buy_cost_pct", 0.0016)) * 100
+    st.session_state["cfg_sell_cost"] = float(payload.get("sell_cost_pct", 0.0035)) * 100
+    st.session_state["cfg_lot_size"] = int(payload.get("lot_size", 100))
+    st.session_state["cfg_stop_loss"] = float(payload.get("stop_loss_pct", 0.0)) * 100
     st.session_state["loaded_config_name"] = payload.get("model_path", "konfigurasi")
 
 
@@ -511,7 +638,7 @@ def build_config() -> ExperimentConfig:
                 _apply_config_payload(payload)
                 st.rerun()
             except (ValueError, UnicodeDecodeError, json.JSONDecodeError) as error:
-                st.error(f"Konfigurasi gagal dimuat: {error}")
+                notify_error(error, title="Gagal Memuat Konfigurasi")
         if st.session_state.get("loaded_config_name"):
             st.success(f"Config aktif: {st.session_state['loaded_config_name']}")
 
@@ -549,11 +676,20 @@ def build_config() -> ExperimentConfig:
                 "API_BASE_URL": source_api_url,
             }
         elif source == "licensed_provider":
-            from finrl.integrations.provider_adapter import load_provider_store
+            try:
+                from finrl.db.bridge import load_provider_store as load_provider_bridge
 
+                provider_store = load_provider_bridge(CONFIG_DIR)
+            except Exception:
+                from finrl.integrations.provider_adapter import load_provider_store
+
+                provider_path = CONFIG_DIR / "providers.json"
+                try:
+                    provider_store = load_provider_store(provider_path)
+                except (OSError, ValueError, json.JSONDecodeError):
+                    provider_store = {"active_market_data": ""}
             provider_path = CONFIG_DIR / "providers.json"
             try:
-                provider_store = load_provider_store(provider_path)
                 active_provider = provider_store.get("active_market_data", "")
             except (OSError, ValueError, json.JSONDecodeError):
                 active_provider = ""
@@ -632,6 +768,29 @@ def build_config() -> ExperimentConfig:
             st.session_state[params_key] = default_params
         params = st.text_area("Parameter agent (JSON)", key=params_key)
 
+        is_idx = any(str(t).endswith(".JK") for t in _tickers(ticker_text)) or "Indonesia" in universe
+        col_c1, col_c2 = st.columns(2)
+        buy_cost = col_c1.number_input(
+            "Fee Beli (%)", min_value=0.0, max_value=5.0,
+            value=0.16 if is_idx else 0.10, step=0.01, key="cfg_buy_cost",
+        )
+        sell_cost = col_c2.number_input(
+            "Fee Jual + Pajak (%)", min_value=0.0, max_value=5.0,
+            value=0.35 if is_idx else 0.10, step=0.01, key="cfg_sell_cost",
+            help="Di IDX mencakup komisi broker (~0.25%) + PPh Final pasal 4(2) 0.1% + levy.",
+        )
+        col_l1, col_l2 = st.columns(2)
+        lot_sz = col_l1.number_input(
+            "Satuan Lot (lembar)", min_value=1,
+            value=100 if is_idx else 1, step=1, key="cfg_lot_size",
+            help="Di BEI 1 lot = 100 lembar saham.",
+        )
+        stop_loss = col_l2.number_input(
+            "Hard Stop-Loss per Posisi (%)", min_value=0.0, max_value=50.0,
+            value=0.0, step=0.5, key="cfg_stop_loss",
+            help="Likuidasi otomatis jika posisi rugi melebihi ambang batas. 0 = nonaktif.",
+        )
+
     return ExperimentConfig(
         tickers=_tickers(ticker_text), data_source=source, interval=interval,
         train_start=train_start, train_end=train_end, test_start=test_start,
@@ -639,6 +798,10 @@ def build_config() -> ExperimentConfig:
         model_name=model, model_path=model_path, timesteps=int(timesteps),
         agent_params=_parse_json(params, "Parameter agent"), universe=universe,
         risk_free_rate=float(risk_free_rate) / 100,
+        buy_cost_pct=float(buy_cost) / 100,
+        sell_cost_pct=float(sell_cost) / 100,
+        lot_size=int(lot_sz),
+        stop_loss_pct=float(stop_loss) / 100,
     )
 
 
@@ -646,7 +809,14 @@ def run_training(config: ExperimentConfig, source_kwargs: dict[str, str]) -> Any
     from finrl.train import train
 
     Path(config.model_path).parent.mkdir(parents=True, exist_ok=True)
-    shared = dict(source_kwargs, cwd=config.model_path)
+    shared = dict(
+        source_kwargs,
+        cwd=config.model_path,
+        buy_cost_pct=config.buy_cost_pct,
+        sell_cost_pct=config.sell_cost_pct,
+        lot_size=config.lot_size,
+        stop_loss_pct=config.stop_loss_pct,
+    )
     if config.drl_lib == "stable_baselines3":
         shared.update(agent_params=config.agent_params, total_timesteps=config.timesteps)
     elif config.drl_lib == "elegantrl":
@@ -675,7 +845,12 @@ def run_backtest(config: ExperimentConfig, source_kwargs: dict[str, str]) -> lis
     values = test(
         config.test_start, config.test_end, config.tickers, config.data_source,
         config.interval, config.indicators, config.drl_lib, StockTradingEnv,
-        config.model_name, config.use_vix, cwd=config.model_path, **source_kwargs,
+        config.model_name, config.use_vix, cwd=config.model_path,
+        buy_cost_pct=config.buy_cost_pct,
+        sell_cost_pct=config.sell_cost_pct,
+        lot_size=config.lot_size,
+        stop_loss_pct=config.stop_loss_pct,
+        **source_kwargs,
     )
     return list(values)
 
@@ -861,7 +1036,7 @@ def show_home(config: ExperimentConfig) -> None:
             ],
         }
     )
-    st.dataframe(status, hide_index=True, width="stretch")
+    st.dataframe(status, hide_index=True, use_container_width=True)
 
 
 def show_data(config: ExperimentConfig, source_kwargs: dict[str, str]) -> None:
@@ -875,9 +1050,9 @@ def show_data(config: ExperimentConfig, source_kwargs: dict[str, str]) -> None:
                     config.use_vix, tuple(sorted(source_kwargs.items())),
                 )
             st.session_state["market_data"] = data
-            st.success(f"{len(data):,} baris siap digunakan untuk eksperimen.")
+            notify_success(f"{len(data):,} baris siap digunakan untuk eksperimen.")
         except Exception as error:
-            st.exception(error)
+            notify_error(error, title="Gagal Memuat Data")
     data = st.session_state.get("market_data")
     if data is not None:
         date_col = "timestamp" if "timestamp" in data.columns else "date"
@@ -893,11 +1068,11 @@ def show_data(config: ExperimentConfig, source_kwargs: dict[str, str]) -> None:
             b.metric("Ticker tersedia", data["tic"].nunique())
             c.metric("Missing close", int(data["close"].isna().sum()))
             with st.expander("Data quality & coverage", expanded=True):
-                st.dataframe(coverage, width="stretch")
+                st.dataframe(coverage, use_container_width=True)
 
         table_tab, history_tab = st.tabs(("Preview data", "Histori per ticker"))
         with table_tab:
-            st.dataframe(data.tail(100), width="stretch")
+            st.dataframe(data.tail(100), use_container_width=True)
         with history_tab:
             if "tic" in data.columns:
                 selected_ticker = st.selectbox(
@@ -912,7 +1087,7 @@ def show_data(config: ExperimentConfig, source_kwargs: dict[str, str]) -> None:
                 ]
                 if chart_columns:
                     st.line_chart(ticker_data[chart_columns])
-                st.dataframe(ticker_data.tail(250), width="stretch")
+                st.dataframe(ticker_data.tail(250), use_container_width=True)
         st.download_button(
             "Unduh seluruh data pasar (CSV)",
             data.to_csv(index=False).encode("utf-8"),
@@ -926,21 +1101,21 @@ def show_data(config: ExperimentConfig, source_kwargs: dict[str, str]) -> None:
 
 def show_provider_hub(config: ExperimentConfig) -> None:
     """Configure and compare research, licensed, and broker quote sources."""
+    from finrl.db.bridge import load_provider_store as load_provider_bridge
+    from finrl.db.bridge import save_provider_store as save_provider_bridge
     from finrl.integrations.provider_adapter import GenericRESTProvider
     from finrl.integrations.provider_adapter import ProviderProfile
-    from finrl.integrations.provider_adapter import load_provider_store
-    from finrl.integrations.provider_adapter import save_provider_store
     from finrl.integrations.provider_adapter import yahoo_research_quote
     from finrl.integrations.secure_store import save_secret
 
     path = CONFIG_DIR / "providers.json"
     try:
-        store = load_provider_store(path)
+        store = load_provider_bridge(CONFIG_DIR)
         profiles = [
             ProviderProfile.from_dict(item) for item in store.get("providers", [])
         ]
     except Exception as error:
-        st.error(f"Konfigurasi provider tidak dapat dibaca: {error}")
+        notify_error(error, title="Konfigurasi Provider Error")
         return
     by_id = {profile.id: profile for profile in profiles}
 
@@ -979,8 +1154,8 @@ def show_provider_hub(config: ExperimentConfig) -> None:
         if st.button("Simpan source priority", use_container_width=True):
             store["active_market_data"] = active_market
             store["active_broker"] = active_broker
-            save_provider_store(path, store)
-            st.success("Source priority tersimpan.")
+            save_provider_bridge(CONFIG_DIR, store)
+            notify_success("Source priority tersimpan (PostgreSQL + file mirror).")
 
         include_yahoo = st.toggle(
             "Sertakan Yahoo sebagai pembanding research", value=True,
@@ -1034,7 +1209,7 @@ def show_provider_hub(config: ExperimentConfig) -> None:
                     "provider_name", "tier", "provider_symbol", "timestamp", "last",
                     "bid", "ask", "volume", "age_seconds", "status",
                     "deviation_vs_primary_pct",
-                ]], hide_index=True, width="stretch",
+                ]], hide_index=True, use_container_width=True,
             )
         for error in st.session_state.get("provider_quote_errors", []):
             st.error(error)
@@ -1042,10 +1217,10 @@ def show_provider_hub(config: ExperimentConfig) -> None:
         if active_broker and st.button("Uji account broker (read-only)"):
             try:
                 account = GenericRESTProvider(by_id[active_broker]).get_account()
-                st.success("Autentikasi account broker berhasil.")
+                notify_success("Autentikasi account broker berhasil.")
                 st.json(account)
             except Exception as error:
-                st.error(str(error))
+                notify_error(error, title="Autentikasi Broker Gagal")
         st.info(
             "Order placement sengaja belum tersedia. Aktivasi order memerlukan adapter "
             "khusus vendor, sandbox, idempotency key, pre-trade limits, audit trail, "
@@ -1186,15 +1361,15 @@ def show_provider_hub(config: ExperimentConfig) -> None:
                 ]
                 items.append(asdict(profile))
                 store["providers"] = items
-                save_provider_store(path, store)
+                save_provider_bridge(CONFIG_DIR, store)
                 if secret_value:
                     if not profile.secret_name:
                         raise ValueError("Credential vault key wajib diisi untuk menyimpan token.")
                     save_secret(profile.secret_name, secret_value)
-                st.success(f"Profile {profile.name} tersimpan tanpa menulis secret ke JSON.")
+                notify_success(f"Profile {profile.name} tersimpan tanpa menulis secret ke JSON.")
                 st.rerun()
             except Exception as error:
-                st.error(str(error))
+                notify_error(error, title="Gagal Menyimpan Profile")
 
     with architecture_tab:
         st.graphviz_chart(
@@ -1221,7 +1396,7 @@ def show_provider_hub(config: ExperimentConfig) -> None:
               rl -> decision;
             }
             """,
-            width="stretch",
+            use_container_width=True,
         )
         st.markdown(
             """
@@ -1249,7 +1424,7 @@ def show_idx_analysis(config: ExperimentConfig) -> None:
     try:
         analysis = build_idx_analysis(data, risk_free_rate=config.risk_free_rate)
     except Exception as error:
-        st.exception(error)
+        notify_error(error, title="Gagal Menjalankan Analisis IDX")
         return
 
     screener = analysis.screener.copy()
@@ -1338,10 +1513,10 @@ def show_idx_analysis(config: ExperimentConfig) -> None:
                 "abs(datum.Korelasi) > 0.55", alt.value("white"), alt.value("black")
             ),
         )
-        st.altair_chart((heatmap + labels).properties(height=520), width="stretch")
+        st.altair_chart((heatmap + labels).properties(height=520), use_container_width=True)
         st.caption("Merah = bergerak searah, biru = berlawanan, putih = hubungan linear lemah.")
         with st.expander("Lihat matriks angka"):
-            st.dataframe(matrix, width="stretch")
+            st.dataframe(matrix, use_container_width=True)
     with breadth_tab:
         st.line_chart(analysis.breadth)
 
@@ -1353,12 +1528,12 @@ def show_training(config: ExperimentConfig, source_kwargs: dict[str, str]) -> No
         try:
             with st.spinner("Training sedang berjalan..."):
                 st.session_state["trained_model"] = run_training(config, source_kwargs)
-            st.success(f"Training selesai. Artefak tersedia di {config.model_path}.")
+            notify_success(f"Training selesai. Artefak tersedia di {config.model_path}.")
             manifest_path = st.session_state.get("model_manifest_path")
             if manifest_path:
                 st.caption(f"Konfigurasi model disimpan di {manifest_path}")
         except Exception as error:
-            st.exception(error)
+            notify_error(error, title="Training Gagal")
 
 
 def show_backtest(config: ExperimentConfig, source_kwargs: dict[str, str]) -> None:
@@ -1403,9 +1578,9 @@ def show_backtest(config: ExperimentConfig, source_kwargs: dict[str, str]) -> No
             with st.spinner("Memvalidasi artefak model..."):
                 _verify_model_load(config, artifact)
             st.session_state["loaded_model_path"] = str(artifact)
-            st.success("Model berhasil dimuat dan dipilih sebagai model aktif.")
+            notify_success("Model berhasil dimuat dan dipilih sebagai model aktif.")
         except Exception as error:
-            st.exception(error)
+            notify_error(error, title="Gagal Memuat Model")
 
     model_ready = st.session_state.get("loaded_model_path") == str(artifact)
     with test_col:
@@ -1420,9 +1595,9 @@ def show_backtest(config: ExperimentConfig, source_kwargs: dict[str, str]) -> No
                 values = run_backtest(config, source_kwargs)
             st.session_state["equity_curve"] = values
             st.session_state["loaded_model_path"] = str(artifact)
-            st.success("Evaluasi out-of-sample selesai.")
+            notify_success("Evaluasi out-of-sample selesai.")
         except Exception as error:
-            st.exception(error)
+            notify_error(error, title="Evaluasi Gagal")
 
     if model_ready:
         st.caption("Model aktif telah melewati validasi loader pada sesi ini.")
@@ -1446,7 +1621,7 @@ def show_backtest(config: ExperimentConfig, source_kwargs: dict[str, str]) -> No
                 "bukan prediksi harga saham masa depan."
             )
             st.line_chart(comparison)
-            st.dataframe(metrics.round(3), width="stretch")
+            st.dataframe(metrics.round(3), use_container_width=True)
         with risk_tab:
             drawdown = comparison.div(comparison.cummax()).sub(1).mul(100)
             st.line_chart(drawdown)
@@ -1472,7 +1647,7 @@ def show_backtest(config: ExperimentConfig, source_kwargs: dict[str, str]) -> No
                 }
             )
             checks["Hasil"] = checks["Status"].map({True: "Lulus", False: "Perlu perhatian"})
-            st.dataframe(checks[["Pemeriksaan", "Hasil"]], hide_index=True, width="stretch")
+            st.dataframe(checks[["Pemeriksaan", "Hasil"]], hide_index=True, use_container_width=True)
             if checks["Status"].all():
                 st.success("Seluruh pemeriksaan dasar lulus. Tetap lakukan multi-period dan paper test.")
             else:
@@ -1623,11 +1798,11 @@ def show_ai_research(config: ExperimentConfig) -> None:
                     models = list_models(base_url, api_key)
                 st.session_state["ai_available_models"] = models
                 if models:
-                    st.success(f"Router terhubung. {len(models)} model tersedia.")
+                    notify_success(f"Router terhubung. {len(models)} model tersedia.")
                 else:
-                    st.warning("Router terhubung, tetapi daftar model kosong.")
+                    notify_warning("Router terhubung, tetapi daftar model kosong.")
             except Exception as error:
-                st.exception(error)
+                notify_error(error, title="Koneksi AI Router Gagal")
 
         available_models = st.session_state.get("ai_available_models", [])
         if available_models:
@@ -1691,25 +1866,25 @@ def show_ai_research(config: ExperimentConfig) -> None:
         )
         st.session_state["ai_saved_model"] = model
         st.session_state["ai_saved_fallbacks"] = fallback_models
-        st.success(f"Profil disimpan di {path} (tanpa API key).")
+        notify_success(f"Profil disimpan di {path} (tanpa API key).")
     if save_key_col.button("Simpan API key ke secure vault", use_container_width=True):
         try:
             save_secret("ai_router_api_key", api_key)
-            st.success("API key AI router tersimpan di credential vault OS.")
+            notify_success("API key AI router tersimpan di credential vault OS.")
         except Exception as error:
-            st.error(f"API key gagal disimpan: {error}")
+            notify_error(error, title="Gagal Menyimpan API Key")
     ticker = st.selectbox("Ticker fokus", config.tickers, key="ai_ticker")
     if st.button("Muat fundamental & berita Yahoo Finance", use_container_width=True):
         try:
             with st.spinner("Mengambil snapshot perusahaan dan headline..."):
                 st.session_state["ai_company_context"] = load_company_research_context(ticker)
             context_loaded = st.session_state["ai_company_context"]
-            st.success(
+            notify_success(
                 f"Snapshot dimuat: {len(context_loaded['fundamentals'])} field fundamental, "
                 f"{len(context_loaded['news'])} headline."
             )
         except Exception as error:
-            st.exception(error)
+            notify_error(error, title="Gagal Memuat Fundamental & Berita")
     company_context = st.session_state.get("ai_company_context")
     if company_context and company_context.get("ticker") == ticker:
         with st.expander("Snapshot Yahoo Finance yang aktif"):
@@ -1791,26 +1966,30 @@ katakan bahwa analisis berita/fundamental terbaru tidak dapat disimpulkan.
             }
             st.session_state.setdefault("ai_research_history", []).append(entry)
             if failures:
-                st.warning(
+                notify_warning(
                     "Model utama gagal; fallback berhasil. Percobaan sebelumnya: "
                     + " | ".join(failures)
                 )
+            else:
+                notify_success(f"Analisis AI selesai menggunakan {response.model}.")
         except RouterHTTPError as error:
             if error.status_code == 403:
-                st.error(
+                notify_error(
                     "Provider menolak akses model (HTTP 403). Periksa koneksi akun/provider, "
                     "izin model, dan kuota di dashboard 9Router. Pilih model lain atau "
-                    "konfigurasikan fallback combo."
+                    "konfigurasikan fallback combo.",
+                    title="Akses AI Router Ditolak (403)",
+                    details=error.detail[:2000] if error.detail else None,
                 )
             else:
-                st.error(
+                notify_error(
                     f"AI router gagal (HTTP {error.status_code}). Coba model/provider lain "
-                    "atau periksa status dan kuota router."
+                    "atau periksa status dan kuota router.",
+                    title=f"AI Router Error ({error.status_code})",
+                    details=error.detail[:2000] if error.detail else None,
                 )
-            with st.expander("Detail teknis router"):
-                st.code(error.detail[:2000], language="text")
         except Exception as error:
-            st.error(f"AI router tidak dapat menyelesaikan request: {error}")
+            notify_error(error, title="AI Router Gagal")
 
     history = st.session_state.get("ai_research_history", [])
     if history:
@@ -1920,26 +2099,26 @@ def show_paper_trading(config: ExperimentConfig) -> None:
             if save_credentials:
                 save_secret("alpaca_paper_api_key", api_key)
                 save_secret("alpaca_paper_api_secret", api_secret)
-            st.success(f"Konfigurasi paper trading disimpan di {path}.")
+            notify_success(f"Konfigurasi paper trading disimpan di {path}.")
         except Exception as error:
-            st.error(f"Konfigurasi gagal disimpan: {error}")
+            notify_error(error, title="Gagal Menyimpan Konfigurasi")
     if test_connection:
         try:
             normalized_api_url, account = validate_alpaca_paper_connection(
                 api_key, api_secret, api_url
             )
             account_status = getattr(account, "status", "terhubung")
-            st.success(
+            notify_success(
                 f"Koneksi read-only berhasil. Status account: {account_status}. "
                 f"Endpoint dinormalisasi menjadi {normalized_api_url}."
             )
         except PermissionError as error:
-            st.error(str(error))
+            notify_error(error, title="Izin Paper Trading Ditolak")
         except (ValueError, ConnectionError) as error:
-            st.error(str(error))
+            notify_error(error, title="Koneksi / Parameter Gagal")
     if submitted:
         if not confirmed:
-            st.error("Konfirmasi paper trading terlebih dahulu.")
+            notify_warning("Konfirmasi paper trading terlebih dahulu.")
             return
         try:
             normalized_api_url = normalize_alpaca_paper_url(api_url)
@@ -1967,11 +2146,11 @@ def show_paper_trading(config: ExperimentConfig) -> None:
                     action_dim=int(action_dim),
                 )
         except PermissionError as error:
-            st.error(str(error))
+            notify_error(error, title="Izin Paper Trading Ditolak")
         except (ValueError, ConnectionError) as error:
-            st.error(str(error))
+            notify_error(error, title="Koneksi / Parameter Paper Trading Gagal")
         except Exception as error:
-            st.exception(error)
+            notify_error(error, title="Paper Trading Gagal")
 
 
 def _monitor_pid() -> int | None:
@@ -2074,9 +2253,9 @@ def show_monitoring(config: ExperimentConfig) -> None:
             pd.to_datetime(daily_time, format="%H:%M")
             save_secret("telegram_bot_token", bot_token)
             path = _write_json_config("telegram_monitor.json", monitor_payload)
-            st.success(f"Konfigurasi disimpan di {path}; token berada di secure vault.")
+            notify_success(f"Konfigurasi disimpan di {path}; token berada di secure vault.")
         except Exception as error:
-            st.error(f"Konfigurasi monitoring gagal disimpan: {error}")
+            notify_error(error, title="Gagal Menyimpan Konfigurasi Monitoring")
     if test_col.button("Kirim pesan tes", use_container_width=True):
         try:
             send_telegram_message(
@@ -2084,9 +2263,9 @@ def show_monitoring(config: ExperimentConfig) -> None:
                 chat_id,
                 "NEZU: koneksi notifikasi Telegram berhasil.",
             )
-            st.success("Pesan tes berhasil dikirim.")
+            notify_success("Pesan tes berhasil dikirim.")
         except Exception as error:
-            st.error(f"Pesan tes gagal: {error}")
+            notify_error(error, title="Pesan Tes Gagal")
 
     st.markdown("### 2. Preview dan eksekusi")
     if st.button("Bangun preview laporan", use_container_width=True):
@@ -2095,16 +2274,16 @@ def show_monitoring(config: ExperimentConfig) -> None:
                 preview = build_daily_report(MonitorConfig(**monitor_payload))
             st.session_state["monitor_preview"] = preview
         except Exception as error:
-            st.error(f"Preview gagal dibuat: {error}")
+            notify_error(error, title="Preview Gagal Dibuat")
     preview = st.session_state.get("monitor_preview")
     if preview:
         st.code(preview, language="text")
         if st.button("Kirim laporan sekarang", type="primary", use_container_width=True):
             try:
                 send_telegram_message(bot_token, chat_id, preview)
-                st.success("Laporan berhasil dikirim ke Telegram.")
+                notify_success("Laporan berhasil dikirim ke Telegram.")
             except Exception as error:
-                st.error(f"Pengiriman gagal: {error}")
+                notify_error(error, title="Pengiriman Gagal")
 
     st.markdown("### 3. Standby monitor")
     pid = _monitor_pid()
@@ -2115,10 +2294,10 @@ def show_monitoring(config: ExperimentConfig) -> None:
             try:
                 os.kill(pid, signal.SIGTERM)
                 (CONFIG_DIR / "telegram_monitor.pid").unlink(missing_ok=True)
-                st.success("Monitor dihentikan.")
+                notify_success("Monitor dihentikan.")
                 st.rerun()
             except OSError as error:
-                st.error(f"Monitor gagal dihentikan: {error}")
+                notify_error(error, title="Monitor Gagal Dihentikan")
     else:
         if action_col.button("Mulai standby monitor", type="primary", use_container_width=True):
             try:
@@ -2147,10 +2326,10 @@ def show_monitoring(config: ExperimentConfig) -> None:
                 (CONFIG_DIR / "telegram_monitor.pid").write_text(
                     str(process.pid), encoding="utf-8"
                 )
-                st.success(f"Standby monitor aktif (PID {process.pid}).")
+                notify_success(f"Standby monitor aktif (PID {process.pid}).")
                 st.rerun()
             except Exception as error:
-                st.error(f"Monitor gagal dimulai: {error}")
+                notify_error(error, title="Monitor Gagal Dimulai")
     st.caption(f"Log monitor: {LOG_DIR / 'telegram-monitor.log'}")
 
 
@@ -2175,7 +2354,7 @@ def show_documentation(config: ExperimentConfig) -> None:
             config_json.encode("utf-8"),
             "nezu_experiment_config.json",
             "application/json",
-            width="stretch",
+            use_container_width=True,
         )
 
         model_path = Path(config.model_path)
@@ -2280,7 +2459,7 @@ def show_documentation(config: ExperimentConfig) -> None:
               outputs -> user;
             }
             """,
-            width="stretch",
+            use_container_width=True,
         )
 
         st.markdown("#### Sesi dan kredensial")
@@ -2307,7 +2486,7 @@ def show_documentation(config: ExperimentConfig) -> None:
               session -> end [style=dashed];
             }
             """,
-            width="stretch",
+            use_container_width=True,
         )
 
         st.markdown("#### Siklus eksperimen E2E")
@@ -2331,7 +2510,7 @@ def show_documentation(config: ExperimentConfig) -> None:
               decide -> cfg [label="iterasi terkontrol", style=dashed];
             }
             """,
-            width="stretch",
+            use_container_width=True,
         )
 
     with glossary_tab:
@@ -2354,9 +2533,189 @@ dimensi state/action yang sama dengan saat training.
         )
 
 
+AUTH_USERS_PATH = CONFIG_DIR / "users.json"
+AUTH_BRAND_NAME = "IDN Maker FINRLAB"
+AUTH_BRAND_TAGLINE = "Decision intelligence workspace"
+MAX_LOGIN_ATTEMPTS = 5
+LOGIN_LOCKOUT_SECONDS = 30
+
+AUTH_CSS = """
+<style>
+[data-testid="stSidebar"], [data-testid="collapsedControl"] {display:none;}
+.idn-auth-hero {
+  text-align:center; padding:1.7rem 1.5rem 1.3rem; border:1px solid var(--nezu-border);
+  border-radius:18px; background:linear-gradient(150deg,#ffffff 0%, #edf5ef 100%); margin-bottom:1.1rem;
+}
+.idn-auth-mark {
+  width:54px; height:54px; margin:0 auto .75rem; border-radius:15px; display:grid; place-items:center;
+  background:var(--nezu-moss); color:#fff; font-weight:700; font-size:1.02rem; letter-spacing:-.03em;
+  box-shadow:0 12px 26px rgba(53,106,82,.22);
+}
+.idn-auth-name {font-size:1.32rem; font-weight:700; letter-spacing:.02em; color:var(--nezu-ink);}
+.idn-auth-tag {font-size:.76rem; color:var(--nezu-ink-muted); margin-top:.32rem; letter-spacing:.02em;}
+.idn-auth-badge {
+  display:inline-block; margin-top:.6rem; padding:.16rem .52rem; border-radius:999px;
+  background:var(--nezu-moss-soft); color:var(--nezu-moss-dark); font-size:.66rem;
+  font-weight:700; letter-spacing:.08em;
+}
+.idn-auth-note {font-size:.72rem; color:var(--nezu-ink-muted); text-align:center; margin-top:.9rem; line-height:1.6;}
+</style>
+"""
+
+
+def _auth_hero(subtitle: str, badge: str = "SECURE ACCESS") -> str:
+    return (
+        '<div class="idn-auth-hero">'
+        '<div class="idn-auth-mark">IF</div>'
+        f'<div class="idn-auth-name">{escape(AUTH_BRAND_NAME)}</div>'
+        f'<div class="idn-auth-tag">{escape(subtitle)}</div>'
+        f'<div class="idn-auth-badge">{escape(badge)}</div>'
+        "</div>"
+    )
+
+
+def _load_auth_store() -> dict[str, Any] | None:
+    try:
+        from finrl.db.bridge import load_auth_store
+
+        return load_auth_store(CONFIG_DIR)
+    except auth.AuthError as error:
+        st.error(f"Penyimpanan user bermasalah: {error}")
+        return None
+    except Exception:
+        try:
+            return auth.load_users(AUTH_USERS_PATH)
+        except auth.AuthError as error:
+            st.error(f"Penyimpanan user bermasalah: {error}")
+            return None
+
+
+def _logout() -> None:
+    """Drop the whole session so credentials and cached data do not persist."""
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+
+
+def _render_setup_page() -> None:
+    st.markdown(AUTH_CSS, unsafe_allow_html=True)
+    _, center, _ = st.columns([1, 1.15, 1])
+    with center:
+        st.markdown(
+            _auth_hero("Inisialisasi administrator", badge="FIRST-RUN SETUP"),
+            unsafe_allow_html=True,
+        )
+        st.info("Belum ada akun. Buat akun admin pertama untuk mengamankan workspace ini.")
+        with st.form("idn_maker_setup"):
+            username = st.text_input("Username admin", value="admin")
+            password = st.text_input("Password", type="password")
+            confirm = st.text_input("Ulangi password", type="password")
+            submitted = st.form_submit_button(
+                "Buat akun", type="primary", use_container_width=True
+            )
+        if submitted:
+            if password != confirm:
+                notify_error("Konfirmasi password tidak sama.", title="Validasi Gagal")
+                return
+            try:
+                from finrl.db.bridge import create_user_bridge
+
+                create_user_bridge(CONFIG_DIR, username, password, role="admin")
+            except auth.AuthError as error:
+                notify_error(str(error), title="Gagal Membuat Akun")
+                return
+            except Exception as error:
+                notify_error(f"Gagal membuat akun: {error}", title="Gagal Membuat Akun")
+                return
+            st.session_state["authenticated"] = True
+            st.session_state["auth_user"] = username.strip()
+            st.session_state["login_attempts"] = 0
+            st.rerun()
+
+
+def _render_login_page() -> None:
+    st.markdown(AUTH_CSS, unsafe_allow_html=True)
+    _, center, _ = st.columns([1, 1.15, 1])
+    with center:
+        st.markdown(
+            _auth_hero(f"{AUTH_BRAND_TAGLINE} · akses terbatas"),
+            unsafe_allow_html=True,
+        )
+        remaining = st.session_state.get("login_locked_until", 0.0) - time.time()
+        locked = remaining > 0
+        if locked:
+            notify_warning(
+                f"Terlalu banyak percobaan. Coba lagi dalam {int(remaining) + 1} detik.",
+                title="Akun Terkunci Sementara",
+            )
+        with st.form("idn_maker_login"):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            submitted = st.form_submit_button(
+                "Masuk", type="primary", use_container_width=True, disabled=locked
+            )
+        if submitted and not locked:
+            try:
+                from finrl.db.bridge import authenticate_bridge
+
+                ok = authenticate_bridge(CONFIG_DIR, username, password)
+            except Exception:
+                store = _load_auth_store()
+                ok = store is not None and auth.authenticate(store, username, password)
+            if ok:
+                st.session_state["authenticated"] = True
+                st.session_state["auth_user"] = username.strip()
+                st.session_state["login_attempts"] = 0
+                st.session_state["login_locked_until"] = 0.0
+                st.rerun()
+            else:
+                attempts = st.session_state.get("login_attempts", 0) + 1
+                if attempts >= MAX_LOGIN_ATTEMPTS:
+                    st.session_state["login_locked_until"] = (
+                        time.time() + LOGIN_LOCKOUT_SECONDS
+                    )
+                    st.session_state["login_attempts"] = 0
+                else:
+                    st.session_state["login_attempts"] = attempts
+                notify_error("Username atau password salah.", title="Login Gagal")
+        st.markdown(
+            '<div class="idn-auth-note">Sesi berakhir saat tab ditutup atau server di-restart. '
+            "Kredensial disimpan sebagai hash PBKDF2 di PostgreSQL (fallback configs/users.json).</div>",
+            unsafe_allow_html=True,
+        )
+
+
+def _require_authentication() -> bool:
+    """Render the auth gate and return True only for an authenticated session."""
+    if st.session_state.get("authenticated") and st.session_state.get("auth_user"):
+        return True
+    try:
+        from finrl.db.bridge import user_count_bridge
+
+        count = user_count_bridge(CONFIG_DIR)
+    except Exception:
+        store = _load_auth_store()
+        if store is None:
+            return False
+        count = auth.user_count(store)
+        if count == 0:
+            _render_setup_page()
+        else:
+            _render_login_page()
+        return False
+    if count == 0:
+        _render_setup_page()
+    else:
+        _render_login_page()
+    return False
+
+
 def main() -> None:
-    st.set_page_config(page_title="NEZU · Decision Workspace", page_icon="◈", layout="wide")
+    st.set_page_config(
+        page_title="IDN Maker FINRLAB · NEZU", page_icon="◈", layout="wide"
+    )
     st.markdown(NEZU_CSS, unsafe_allow_html=True)
+    if not _require_authentication():
+        return
     with st.sidebar:
         st.markdown(
             """
@@ -2379,6 +2738,15 @@ def main() -> None:
             <div class="nezu-side-label">ACTIVE EXPERIMENT</div>
             """,
             unsafe_allow_html=True,
+        )
+        st.markdown('<div class="nezu-side-label">SESSION</div>', unsafe_allow_html=True)
+        st.caption(f"Masuk sebagai {st.session_state.get('auth_user', '-')}")
+        st.button(
+            "Keluar",
+            key="logout_button",
+            icon=":material/logout:",
+            use_container_width=True,
+            on_click=_logout,
         )
     try:
         config = build_config()
