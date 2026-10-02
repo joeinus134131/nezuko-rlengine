@@ -906,7 +906,7 @@ def show_home(config: ExperimentConfig) -> None:
             ],
         }
     )
-    st.dataframe(status, hide_index=True, width="stretch")
+    st.dataframe(status, hide_index=True, use_container_width=True)
 
 
 def show_data(config: ExperimentConfig, source_kwargs: dict[str, str]) -> None:
@@ -938,11 +938,11 @@ def show_data(config: ExperimentConfig, source_kwargs: dict[str, str]) -> None:
             b.metric("Ticker tersedia", data["tic"].nunique())
             c.metric("Missing close", int(data["close"].isna().sum()))
             with st.expander("Data quality & coverage", expanded=True):
-                st.dataframe(coverage, width="stretch")
+                st.dataframe(coverage, use_container_width=True)
 
         table_tab, history_tab = st.tabs(("Preview data", "Histori per ticker"))
         with table_tab:
-            st.dataframe(data.tail(100), width="stretch")
+            st.dataframe(data.tail(100), use_container_width=True)
         with history_tab:
             if "tic" in data.columns:
                 selected_ticker = st.selectbox(
@@ -957,7 +957,7 @@ def show_data(config: ExperimentConfig, source_kwargs: dict[str, str]) -> None:
                 ]
                 if chart_columns:
                     st.line_chart(ticker_data[chart_columns])
-                st.dataframe(ticker_data.tail(250), width="stretch")
+                st.dataframe(ticker_data.tail(250), use_container_width=True)
         st.download_button(
             "Unduh seluruh data pasar (CSV)",
             data.to_csv(index=False).encode("utf-8"),
@@ -1079,7 +1079,7 @@ def show_provider_hub(config: ExperimentConfig) -> None:
                     "provider_name", "tier", "provider_symbol", "timestamp", "last",
                     "bid", "ask", "volume", "age_seconds", "status",
                     "deviation_vs_primary_pct",
-                ]], hide_index=True, width="stretch",
+                ]], hide_index=True, use_container_width=True,
             )
         for error in st.session_state.get("provider_quote_errors", []):
             st.error(error)
@@ -1266,7 +1266,7 @@ def show_provider_hub(config: ExperimentConfig) -> None:
               rl -> decision;
             }
             """,
-            width="stretch",
+            use_container_width=True,
         )
         st.markdown(
             """
@@ -1383,10 +1383,10 @@ def show_idx_analysis(config: ExperimentConfig) -> None:
                 "abs(datum.Korelasi) > 0.55", alt.value("white"), alt.value("black")
             ),
         )
-        st.altair_chart((heatmap + labels).properties(height=520), width="stretch")
+        st.altair_chart((heatmap + labels).properties(height=520), use_container_width=True)
         st.caption("Merah = bergerak searah, biru = berlawanan, putih = hubungan linear lemah.")
         with st.expander("Lihat matriks angka"):
-            st.dataframe(matrix, width="stretch")
+            st.dataframe(matrix, use_container_width=True)
     with breadth_tab:
         st.line_chart(analysis.breadth)
 
@@ -1491,7 +1491,7 @@ def show_backtest(config: ExperimentConfig, source_kwargs: dict[str, str]) -> No
                 "bukan prediksi harga saham masa depan."
             )
             st.line_chart(comparison)
-            st.dataframe(metrics.round(3), width="stretch")
+            st.dataframe(metrics.round(3), use_container_width=True)
         with risk_tab:
             drawdown = comparison.div(comparison.cummax()).sub(1).mul(100)
             st.line_chart(drawdown)
@@ -1517,7 +1517,7 @@ def show_backtest(config: ExperimentConfig, source_kwargs: dict[str, str]) -> No
                 }
             )
             checks["Hasil"] = checks["Status"].map({True: "Lulus", False: "Perlu perhatian"})
-            st.dataframe(checks[["Pemeriksaan", "Hasil"]], hide_index=True, width="stretch")
+            st.dataframe(checks[["Pemeriksaan", "Hasil"]], hide_index=True, use_container_width=True)
             if checks["Status"].all():
                 st.success("Seluruh pemeriksaan dasar lulus. Tetap lakukan multi-period dan paper test.")
             else:
@@ -2220,7 +2220,7 @@ def show_documentation(config: ExperimentConfig) -> None:
             config_json.encode("utf-8"),
             "nezu_experiment_config.json",
             "application/json",
-            width="stretch",
+            use_container_width=True,
         )
 
         model_path = Path(config.model_path)
@@ -2325,7 +2325,7 @@ def show_documentation(config: ExperimentConfig) -> None:
               outputs -> user;
             }
             """,
-            width="stretch",
+            use_container_width=True,
         )
 
         st.markdown("#### Sesi dan kredensial")
@@ -2352,7 +2352,7 @@ def show_documentation(config: ExperimentConfig) -> None:
               session -> end [style=dashed];
             }
             """,
-            width="stretch",
+            use_container_width=True,
         )
 
         st.markdown("#### Siklus eksperimen E2E")
@@ -2376,7 +2376,7 @@ def show_documentation(config: ExperimentConfig) -> None:
               decide -> cfg [label="iterasi terkontrol", style=dashed];
             }
             """,
-            width="stretch",
+            use_container_width=True,
         )
 
     with glossary_tab:
