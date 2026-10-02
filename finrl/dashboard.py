@@ -2496,8 +2496,9 @@ def show_documentation(config: ExperimentConfig) -> None:
 
         st.markdown("#### Sesi dan kredensial")
         st.info(
-            "Saat ini tidak ada login pengguna, database akun, role, atau session "
-            "server permanen. API key Alpaca dimasukkan pada sesi Streamlit."
+            "Workspace production menggunakan login administrator tunggal. Akun disimpan "
+            "sebagai hash di PostgreSQL dan registrasi publik dinonaktifkan. Secret provider "
+            "disimpan terenkripsi; kredensial Alpaca hanya digunakan pada sesi terkait."
         )
         st.graphviz_chart(
             """
@@ -2570,6 +2571,11 @@ AUTH_BRAND_NAME = "IDN Maker FINRLAB"
 AUTH_BRAND_TAGLINE = "Decision intelligence workspace"
 MAX_LOGIN_ATTEMPTS = 5
 LOGIN_LOCKOUT_SECONDS = 30
+ALLOW_ADMIN_BOOTSTRAP = os.getenv("ALLOW_ADMIN_BOOTSTRAP", "").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+}
 
 AUTH_CSS = """
 <style>
@@ -2690,9 +2696,12 @@ def _render_login_page() -> None:
                 from finrl.db.bridge import authenticate_bridge
 
                 ok = authenticate_bridge(CONFIG_DIR, username, password)
-            except Exception:
-                store = _load_auth_store()
-                ok = store is not None and auth.authenticate(store, username, password)
+            except Exception as error:
+                notify_error(
+                    f"Penyimpanan akun tidak dapat diakses: {error}",
+                    title="Login Tidak Tersedia",
+                )
+                return
             if ok:
                 st.session_state["authenticated"] = True
                 st.session_state["auth_user"] = username.strip()
@@ -2724,18 +2733,23 @@ def _require_authentication() -> bool:
         from finrl.db.bridge import user_count_bridge
 
         count = user_count_bridge(CONFIG_DIR)
-    except Exception:
-        store = _load_auth_store()
-        if store is None:
-            return False
-        count = auth.user_count(store)
-        if count == 0:
-            _render_setup_page()
-        else:
-            _render_login_page()
+    except Exception as error:
+        notify_error(
+            "Penyimpanan akun tidak dapat diakses. Akses ditutup untuk mencegah "
+            f"bootstrap admin yang tidak sah. Detail: {error}",
+            title="Autentikasi Tidak Tersedia",
+        )
         return False
     if count == 0:
-        _render_setup_page()
+        if ALLOW_ADMIN_BOOTSTRAP:
+            _render_setup_page()
+        else:
+            notify_error(
+                "Belum ada akun administrator. Registrasi publik dinonaktifkan. "
+                "Provision akun admin melalui proses deployment, atau aktifkan "
+                "ALLOW_ADMIN_BOOTSTRAP hanya untuk inisialisasi pertama.",
+                title="Administrator Belum Diprovision",
+            )
     else:
         _render_login_page()
     return False
