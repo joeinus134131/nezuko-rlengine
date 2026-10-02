@@ -2571,11 +2571,6 @@ AUTH_BRAND_NAME = "IDN Maker FINRLAB"
 AUTH_BRAND_TAGLINE = "Decision intelligence workspace"
 MAX_LOGIN_ATTEMPTS = 5
 LOGIN_LOCKOUT_SECONDS = 30
-ALLOW_ADMIN_BOOTSTRAP = os.getenv("ALLOW_ADMIN_BOOTSTRAP", "").strip().lower() in {
-    "1",
-    "true",
-    "yes",
-}
 
 AUTH_CSS = """
 <style>
@@ -2632,42 +2627,6 @@ def _logout() -> None:
     """Drop the whole session so credentials and cached data do not persist."""
     for key in list(st.session_state.keys()):
         del st.session_state[key]
-
-
-def _render_setup_page() -> None:
-    st.markdown(AUTH_CSS, unsafe_allow_html=True)
-    _, center, _ = st.columns([1, 1.15, 1])
-    with center:
-        st.markdown(
-            _auth_hero("Inisialisasi administrator", badge="FIRST-RUN SETUP"),
-            unsafe_allow_html=True,
-        )
-        st.info("Belum ada akun. Buat akun admin pertama untuk mengamankan workspace ini.")
-        with st.form("idn_maker_setup"):
-            username = st.text_input("Username admin", value="admin")
-            password = st.text_input("Password", type="password")
-            confirm = st.text_input("Ulangi password", type="password")
-            submitted = st.form_submit_button(
-                "Buat akun", type="primary", use_container_width=True
-            )
-        if submitted:
-            if password != confirm:
-                notify_error("Konfirmasi password tidak sama.", title="Validasi Gagal")
-                return
-            try:
-                from finrl.db.bridge import create_user_bridge
-
-                create_user_bridge(CONFIG_DIR, username, password, role="admin")
-            except auth.AuthError as error:
-                notify_error(str(error), title="Gagal Membuat Akun")
-                return
-            except Exception as error:
-                notify_error(f"Gagal membuat akun: {error}", title="Gagal Membuat Akun")
-                return
-            st.session_state["authenticated"] = True
-            st.session_state["auth_user"] = username.strip()
-            st.session_state["login_attempts"] = 0
-            st.rerun()
 
 
 def _render_login_page() -> None:
@@ -2729,29 +2688,7 @@ def _require_authentication() -> bool:
     """Render the auth gate and return True only for an authenticated session."""
     if st.session_state.get("authenticated") and st.session_state.get("auth_user"):
         return True
-    try:
-        from finrl.db.bridge import user_count_bridge
-
-        count = user_count_bridge(CONFIG_DIR)
-    except Exception as error:
-        notify_error(
-            "Penyimpanan akun tidak dapat diakses. Akses ditutup untuk mencegah "
-            f"bootstrap admin yang tidak sah. Detail: {error}",
-            title="Autentikasi Tidak Tersedia",
-        )
-        return False
-    if count == 0:
-        if ALLOW_ADMIN_BOOTSTRAP:
-            _render_setup_page()
-        else:
-            notify_error(
-                "Belum ada akun administrator. Registrasi publik dinonaktifkan. "
-                "Provision akun admin melalui proses deployment, atau aktifkan "
-                "ALLOW_ADMIN_BOOTSTRAP hanya untuk inisialisasi pertama.",
-                title="Administrator Belum Diprovision",
-            )
-    else:
-        _render_login_page()
+    _render_login_page()
     return False
 
 
