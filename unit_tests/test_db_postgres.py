@@ -103,3 +103,18 @@ def test_create_user_does_not_write_file_when_database_fails(monkeypatch, tmp_pa
     with pytest.raises(RuntimeError, match="Gagal membuat akun administrator"):
         bridge.create_user_bridge(tmp_path, "admin", "strong-pass-1")
     assert not (tmp_path / "users.json").exists()
+
+
+def test_resolve_docker_host(monkeypatch) -> None:
+    from finrl.db.database import _resolve_docker_host
+
+    monkeypatch.setenv("RUNNING_IN_DOCKER", "1")
+    url = "postgresql://finrlab_app:secret@127.0.0.1:5432/finrlab?sslmode=require"
+    resolved = _resolve_docker_host(url)
+    assert resolved == "postgresql://finrlab_app:secret@host.docker.internal:5432/finrlab?sslmode=require"
+
+    url_localhost = "postgresql://user:pass@localhost:5432/db"
+    assert _resolve_docker_host(url_localhost) == "postgresql://user:pass@host.docker.internal:5432/db"
+
+    url_external = "postgresql://user:pass@postgres.internal:5432/db"
+    assert _resolve_docker_host(url_external) == url_external
