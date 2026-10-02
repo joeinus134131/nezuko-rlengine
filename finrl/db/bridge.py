@@ -41,6 +41,7 @@ def read_app_config(name: str, config_dir: Path) -> dict[str, Any] | None:
 
 def write_app_config(name: str, payload: dict[str, Any], config_dir: Path) -> str:
     """Persist to DB when configured AND mirror to file for offline fallback."""
+    stored_in_db = False
     if is_db_configured():
         try:
             from finrl.db import repositories as repo
@@ -49,13 +50,17 @@ def write_app_config(name: str, payload: dict[str, Any], config_dir: Path) -> st
             with _session() as session:
                 repo.set_setting(session, key, payload)
                 session.commit()
-        except Exception:
-            pass
+            stored_in_db = True
+        except Exception as error:
+            raise RuntimeError(
+                f"Gagal menyimpan konfigurasi {name} ke PostgreSQL. "
+                "Periksa DATABASE_URL dan migrasi app_settings."
+            ) from error
     # Always mirror to file so VPS has a local copy and local dev keeps working.
     config_dir.mkdir(parents=True, exist_ok=True)
     path = config_dir / name
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
-    if is_db_configured():
+    if stored_in_db:
         return f"PostgreSQL + {path}"
     return str(path)
 

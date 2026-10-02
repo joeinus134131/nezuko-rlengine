@@ -38,6 +38,7 @@ from finrl.config_tickers import SRI_KEHATI_TICKER
 from finrl.integrations import auth
 from finrl.meta.data_processor import DataProcessor
 from finrl.meta.env_stock_trading.env_stocktrading_np import StockTradingEnv
+from finrl.validation import experiment_period_errors
 
 
 SUPPORTED_LIBRARIES = ("stable_baselines3", "elegantrl", "rllib")
@@ -500,7 +501,10 @@ def _write_json_config(name: str, payload: dict[str, Any]) -> Path:
             return Path(result)
         return CONFIG_DIR / name
     except Exception:
-        pass
+        from finrl.db.database import is_db_configured
+
+        if is_db_configured():
+            raise
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     path = CONFIG_DIR / name
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -1041,7 +1045,17 @@ def show_home(config: ExperimentConfig) -> None:
 
 def show_data(config: ExperimentConfig, source_kwargs: dict[str, str]) -> None:
     st.subheader("Data dan sinyal")
-    if st.button("Muat & validasi data", type="primary", use_container_width=True):
+    period_errors = experiment_period_errors(
+        config.train_start, config.train_end, config.test_start, config.test_end
+    )
+    if period_errors:
+        st.error("Konfigurasi periode belum valid:\n- " + "\n- ".join(period_errors))
+    if st.button(
+        "Muat & validasi data",
+        type="primary",
+        use_container_width=True,
+        disabled=bool(period_errors),
+    ):
         try:
             with st.spinner("Mengunduh dan memproses data..."):
                 data = load_market_data(
@@ -1524,7 +1538,12 @@ def show_idx_analysis(config: ExperimentConfig) -> None:
 def show_training(config: ExperimentConfig, source_kwargs: dict[str, str]) -> None:
     st.subheader("Training")
     st.caption("Model disimpan ke path yang ditentukan pada konfigurasi.")
-    if st.button("Mulai training", type="primary"):
+    period_errors = experiment_period_errors(
+        config.train_start, config.train_end, config.test_start, config.test_end
+    )
+    if period_errors:
+        st.error("Training diblokir karena konfigurasi periode belum valid:\n- " + "\n- ".join(period_errors))
+    if st.button("Mulai training", type="primary", disabled=bool(period_errors)):
         try:
             with st.spinner("Training sedang berjalan..."):
                 st.session_state["trained_model"] = run_training(config, source_kwargs)
@@ -1544,6 +1563,9 @@ def show_backtest(config: ExperimentConfig, source_kwargs: dict[str, str]) -> No
     artifact = _resolve_model_path(config.model_path)
     manifest = _load_manifest(config.model_path)
     mismatches = _manifest_mismatches(config, manifest) if manifest else []
+    period_errors = experiment_period_errors(
+        config.train_start, config.train_end, config.test_start, config.test_end
+    )
 
     a, b, c = st.columns(3)
     a.metric("Artefak model", "Ditemukan" if artifact else "Tidak ditemukan")
@@ -1552,6 +1574,8 @@ def show_backtest(config: ExperimentConfig, source_kwargs: dict[str, str]) -> No
 
     if artifact:
         st.code(str(artifact), language=None)
+    if period_errors:
+        st.error("Evaluasi diblokir karena konfigurasi periode belum valid:\n- " + "\n- ".join(period_errors))
     if mismatches:
         st.error(
             "Konfigurasi aktif berbeda dari manifest pada: " + ", ".join(mismatches)
@@ -1570,7 +1594,7 @@ def show_backtest(config: ExperimentConfig, source_kwargs: dict[str, str]) -> No
         load_clicked = st.button(
             "Load & validasi model",
             type="primary",
-            disabled=artifact is None or bool(mismatches),
+            disabled=artifact is None or bool(mismatches) or bool(period_errors),
             use_container_width=True,
         )
     if load_clicked and artifact:
@@ -1586,7 +1610,7 @@ def show_backtest(config: ExperimentConfig, source_kwargs: dict[str, str]) -> No
     with test_col:
         run_clicked = st.button(
             "Jalankan evaluasi",
-            disabled=artifact is None or bool(mismatches),
+            disabled=artifact is None or bool(mismatches) or bool(period_errors),
             use_container_width=True,
         )
     if run_clicked:
@@ -2197,9 +2221,17 @@ def show_monitoring(config: ExperimentConfig) -> None:
             st.session_state.setdefault(
                 "telegram_bot_token", load_secret("telegram_bot_token") or ""
             )
-        except Exception:
+            st.session_state.pop("monitor_secret_error", None)
+        except Exception as error:
             st.session_state.setdefault("telegram_bot_token", "")
+            st.session_state["monitor_secret_error"] = str(error)
         st.session_state["monitor_profile_initialized"] = True
+
+    if st.session_state.get("monitor_secret_error"):
+        st.warning(
+            "Token Telegram tidak dapat dimuat dari secure vault: "
+            + st.session_state["monitor_secret_error"]
+        )
 
     with st.expander("1. Telegram & jadwal", expanded=True):
         bot_token = st.text_input(

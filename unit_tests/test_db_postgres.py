@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker
 os.environ.setdefault("APP_SECRET_KEY", "test-only-key-please-override-in-prod-123456")
 
 from finrl.db import repositories as repo
+from finrl.db import bridge
 from finrl.db.crypto import decrypt_secret, encrypt_secret
 from finrl.db.models import Base
 
@@ -64,3 +65,16 @@ def test_experiment_create_and_list(session) -> None:
     )
     session.commit()
     assert repo.list_experiments(session)[0].name == "e1"
+
+
+def test_config_write_does_not_hide_database_failure(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(bridge, "is_db_configured", lambda: True)
+    monkeypatch.setattr(
+        bridge,
+        "_session",
+        lambda: (_ for _ in ()).throw(RuntimeError("database unavailable")),
+    )
+
+    with pytest.raises(RuntimeError, match="Gagal menyimpan konfigurasi"):
+        bridge.write_app_config("telegram_monitor.json", {"chat_id": "1"}, tmp_path)
+    assert not (tmp_path / "telegram_monitor.json").exists()
