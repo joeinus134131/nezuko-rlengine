@@ -20,7 +20,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-nezu}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
       APP_SECRET_KEY: ${APP_SECRET_KEY:-}
-      ALLOW_ADMIN_BOOTSTRAP: ${ALLOW_ADMIN_BOOTSTRAP:-false}
     volumes:
       - finance_runtime:/app/runtime
       - finance_configs:/app/configs
