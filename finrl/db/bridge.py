@@ -148,25 +148,29 @@ def create_user_bridge(
 ) -> None:
     from finrl.integrations import auth as local_auth
 
-    # Always keep file mirror for fallback.
+    db_mode = is_db_configured()
+    if db_mode:
+        from finrl.db import repositories as repo
+
+        try:
+            with _session() as session:
+                repo.create_user_db(session, username, password, role=role)
+                session.commit()
+        except Exception as error:
+            if isinstance(error, local_auth.AuthError):
+                raise
+            raise RuntimeError("Gagal membuat akun administrator di PostgreSQL.") from error
+
+    # Keep a local mirror for disaster recovery after the authoritative write.
     try:
         store = local_auth.load_users(config_dir / "users.json")
     except local_auth.AuthError:
         store = local_auth.empty_store()
-    local_auth.create_user(store, username, password, role=role)
-    local_auth.save_users(config_dir / "users.json", store)
-    if not is_db_configured():
-        return
-    from finrl.db import repositories as repo
-
-    try:
-        with _session() as session:
-            # Skip if already migrated (file was source of truth on first run).
-            if repo.get_user(session, username.strip()) is None:
-                repo.create_user_db(session, username, password, role=role)
-                session.commit()
-    except Exception:
+    if db_mode and username.strip() in store.get("users", {}):
         pass
+    else:
+        local_auth.create_user(store, username, password, role=role)
+    local_auth.save_users(config_dir / "users.json", store)
 
 
 def authenticate_bridge(config_dir: Path, username: str, password: str) -> bool:
@@ -178,7 +182,7 @@ def authenticate_bridge(config_dir: Path, username: str, password: str) -> bool:
         except local_auth.AuthError:
             return False
         return local_auth.authenticate(store, username, password)
-    # DB-first, file fallback if DB down.
+    # PostgreSQL is authoritative in server mode. Fail closed when it is down.
     try:
         from finrl.db import repositories as repo
 
@@ -197,14 +201,8 @@ def authenticate_bridge(config_dir: Path, username: str, password: str) -> bool:
                     return False
                 return local_auth.authenticate(store, username, password)
         return False
-    except Exception:
-        from finrl.integrations import auth as local_auth
-
-        try:
-            store = local_auth.load_users(config_dir / "users.json")
-        except local_auth.AuthError:
-            return False
-        return local_auth.authenticate(store, username, password)
+    except Exception as error:
+        raise RuntimeError("Penyimpanan akun PostgreSQL tidak dapat diakses.") from error
 
 
 def user_count_bridge(config_dir: Path) -> int:
@@ -231,8 +229,8 @@ def user_count_bridge(config_dir: Path) -> int:
             except local_auth.AuthError:
                 return 0
         return count
-    except Exception:
-        return 0
+    except Exception as error:
+        raise RuntimeError("Penyimpanan akun PostgreSQL tidak dapat diakses.") from error
 
 
 # ---------------------------------------------------------------- secrets ---

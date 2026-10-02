@@ -78,3 +78,28 @@ def test_config_write_does_not_hide_database_failure(monkeypatch, tmp_path) -> N
     with pytest.raises(RuntimeError, match="Gagal menyimpan konfigurasi"):
         bridge.write_app_config("telegram_monitor.json", {"chat_id": "1"}, tmp_path)
     assert not (tmp_path / "telegram_monitor.json").exists()
+
+
+def test_user_count_fails_closed_when_database_is_unavailable(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(bridge, "is_db_configured", lambda: True)
+    monkeypatch.setattr(
+        bridge,
+        "_session",
+        lambda: (_ for _ in ()).throw(RuntimeError("database unavailable")),
+    )
+
+    with pytest.raises(RuntimeError, match="PostgreSQL tidak dapat diakses"):
+        bridge.user_count_bridge(tmp_path)
+
+
+def test_create_user_does_not_write_file_when_database_fails(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(bridge, "is_db_configured", lambda: True)
+    monkeypatch.setattr(
+        bridge,
+        "_session",
+        lambda: (_ for _ in ()).throw(RuntimeError("database unavailable")),
+    )
+
+    with pytest.raises(RuntimeError, match="Gagal membuat akun administrator"):
+        bridge.create_user_bridge(tmp_path, "admin", "strong-pass-1")
+    assert not (tmp_path / "users.json").exists()
