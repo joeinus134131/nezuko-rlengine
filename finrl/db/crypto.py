@@ -7,6 +7,12 @@ import os
 
 
 def _fernet():
+    try:
+        from finrl.db.database import _load_project_dotenv
+
+        _load_project_dotenv()
+    except Exception:
+        pass
     key_material = os.getenv("APP_SECRET_KEY", "").strip()
     if not key_material:
         return None
@@ -37,4 +43,10 @@ def decrypt_secret(ciphertext: str) -> str:
 
 
 def is_encryption_configured() -> bool:
+    try:
+        from finrl.db.database import _load_project_dotenv
+
+        _load_project_dotenv()
+    except Exception:
+        pass
     return bool(os.getenv("APP_SECRET_KEY", "").strip())

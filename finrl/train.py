@@ -122,7 +122,11 @@ def train(
         from finrl.agents.stablebaselines3.models import DRLAgent as DRLAgent_sb3
 
         agent = DRLAgent_sb3(env=env_instance)
-        model = agent.get_model(model_name, model_kwargs=agent_params)
+        # Optional seed enables reproducible multi-seed robustness checks
+        # (see finrl/decision/backtest_guard.py and scripts/rl_walkforward.py).
+        model = agent.get_model(
+            model_name, model_kwargs=agent_params, seed=kwargs.get("seed")
+        )
         trained_model = agent.train_model(
             model=model, tb_log_name=model_name, total_timesteps=total_timesteps
         )

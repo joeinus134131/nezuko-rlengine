@@ -1,0 +1,124 @@
+{
+  "default_profile": "Seimbang",
+  "capital": 100000000.0,
+  "lot_size": 100,
+  "risk_free_rate": 0.06,
+  "grounding_threshold": 0.9,
+  "ai_max_adjustment": 10.0,
+  "universe_presets": {
+    "LQ45 Pilihan": [
+      "BBCA.JK",
+      "BBRI.JK",
+      "BMRI.JK",
+      "BBNI.JK",
+      "ASII.JK",
+      "TLKM.JK",
+      "UNVR.JK",
+      "ICBP.JK",
+      "INDF.JK",
+      "ADRO.JK",
+      "PTBA.JK",
+      "ANTM.JK",
+      "MDKA.JK",
+      "INCO.JK",
+      "PGAS.JK",
+      "KLBF.JK",
+      "CPIN.JK",
+      "AMRT.JK",
+      "GOTO.JK",
+      "BRIS.JK"
+    ],
+    "Perbankan & Finansial": [
+      "BBCA.JK",
+      "BBRI.JK",
+      "BMRI.JK",
+      "BBNI.JK",
+      "BRIS.JK",
+      "BDMN.JK",
+      "BBTN.JK"
+    ],
+    "Komoditas & Energi": [
+      "ADRO.JK",
+      "PTBA.JK",
+      "ANTM.JK",
+      "INCO.JK",
+      "MDKA.JK",
+      "PGAS.JK",
+      "MEDC.JK",
+      "ITMG.JK"
+    ],
+    "Konsumer & Kesehatan": [
+      "ICBP.JK",
+      "INDF.JK",
+      "UNVR.JK",
+      "KLBF.JK",
+      "MYOR.JK",
+      "SIDO.JK"
+    ]
+  },
+  "profiles": {
+    "Konservatif": {
+      "weights": {
+        "technical": 0.2,
+        "risk": 0.35,
+        "fundamental": 0.3,
+        "regime": 0.15
+      },
+      "max_drawdown_tolerance": -0.25,
+      "min_liquidity_idr": 5000000000.0,
+      "risk_per_trade": 0.005,
+      "max_position_pct": 0.15,
+      "stop_atr_mult": 1.5,
+      "max_positions": 5,
+      "risk_off_cap": 50.0,
+      "drawdown_penalty": 15.0,
+      "exposure": {
+        "RISK_ON": 0.8,
+        "NEUTRAL": 0.55,
+        "RISK_OFF": 0.25
+      }
+    },
+    "Seimbang": {
+      "weights": {
+        "technical": 0.3,
+        "risk": 0.25,
+        "fundamental": 0.25,
+        "regime": 0.2
+      },
+      "max_drawdown_tolerance": -0.35,
+      "min_liquidity_idr": 2000000000.0,
+      "risk_per_trade": 0.01,
+      "max_position_pct": 0.2,
+      "stop_atr_mult": 2.0,
+      "max_positions": 6,
+      "risk_off_cap": 55.0,
+      "drawdown_penalty": 12.0,
+      "exposure": {
+        "RISK_ON": 1.0,
+        "NEUTRAL": 0.7,
+        "RISK_OFF": 0.4
+      }
+    },
+    "Agresif": {
+      "weights": {
+        "technical": 0.4,
+        "risk": 0.15,
+        "fundamental": 0.2,
+        "regime": 0.25
+      },
+      "max_drawdown_tolerance": -0.5,
+      "min_liquidity_idr": 1000000000.0,
+      "risk_per_trade": 0.015,
+      "max_position_pct": 0.25,
+      "stop_atr_mult": 2.5,
+      "max_positions": 8,
+      "risk_off_cap": 58.0,
+      "drawdown_penalty": 10.0,
+      "exposure": {
+        "RISK_ON": 1.0,
+        "NEUTRAL": 0.85,
+        "RISK_OFF": 0.5
+      }
+    }
+  }
+}

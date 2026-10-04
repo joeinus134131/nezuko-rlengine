@@ -37,7 +37,6 @@ from finrl.config_tickers import LQ45_TICKER
 from finrl.config_tickers import SRI_KEHATI_TICKER
 from finrl.integrations import auth
 from finrl.meta.data_processor import DataProcessor
-from finrl.meta.env_stock_trading.env_stocktrading_np import StockTradingEnv
 from finrl.validation import experiment_period_errors
 
 
@@ -60,6 +59,8 @@ UNIVERSES = (
 )
 NAVIGATION = (
     "Beranda",
+    "Konfigurasi",
+    "Perencana Investasi",
     "Data Market",
     "Data Sources & Broker",
     "Analisa IDX",
@@ -72,19 +73,23 @@ NAVIGATION = (
 )
 APP_NAME = "NEZU"
 NAVIGATION_LABELS = {
-    "Beranda": "Today",
-    "Data Market": "Data & Quality",
-    "Data Sources & Broker": "Connections",
-    "Analisa IDX": "Stock Intelligence",
-    "Training": "Experiment Lab",
+    "Beranda": "Ringkasan",
+    "Konfigurasi": "Konfigurasi",
+    "Perencana Investasi": "Perencana Investasi",
+    "Data Market": "Data & Kualitas",
+    "Data Sources & Broker": "Koneksi",
+    "Analisa IDX": "Intelijen Saham",
+    "Training": "Eksperimen Model",
     "Model & Evaluasi": "Models & Evaluation",
-    "AI Research Copilot": "AI Research",
+    "AI Research Copilot": "Riset AI",
     "Monitoring & Notifikasi": "Monitor",
-    "Paper Trading": "Paper Trading",
-    "Dokumentasi & Output": "Documentation",
+    "Paper Trading": "Simulasi Trading",
+    "Dokumentasi & Output": "Dokumentasi",
 }
 NAVIGATION_ICONS = {
     "Beranda": ":material/home:",
+    "Konfigurasi": ":material/tune:",
+    "Perencana Investasi": ":material/insights:",
     "Data Market": ":material/database:",
     "Data Sources & Broker": ":material/hub:",
     "Analisa IDX": ":material/query_stats:",
@@ -96,22 +101,25 @@ NAVIGATION_ICONS = {
     "Dokumentasi & Output": ":material/menu_book:",
 }
 NAVIGATION_GROUPS = (
-    ("Intelligence", ("Analisa IDX", "AI Research Copilot")),
-    ("Experiments", ("Data Market", "Training", "Model & Evaluasi")),
-    ("Operations", ("Monitoring & Notifikasi", "Paper Trading")),
-    ("System", ("Data Sources & Broker", "Dokumentasi & Output")),
+    ("Keputusan", ("Perencana Investasi",)),
+    ("Intelijen", ("Analisa IDX", "AI Research Copilot")),
+    ("Eksperimen", ("Konfigurasi", "Data Market", "Training", "Model & Evaluasi")),
+    ("Operasional", ("Monitoring & Notifikasi", "Paper Trading")),
+    ("Sistem", ("Data Sources & Broker", "Dokumentasi & Output")),
 )
 PAGE_META = {
-    "Beranda": ("TODAY", "Decision workspace", "Ringkasan pasar, kesiapan eksperimen, dan langkah aman berikutnya."),
-    "Data Market": ("EXPERIMENTS / DATA", "Data & quality", "Muat, validasi, dan audit histori pasar sebelum digunakan oleh model."),
-    "Data Sources & Broker": ("SYSTEM / CONNECTIONS", "Connections", "Kelola provenance data, broker paper, dan readiness setiap provider."),
-    "Analisa IDX": ("STOCKS / MARKET SCANNER", "Stock intelligence", "Tinjau kondisi teknikal, relasi, risiko, dan bukti historis ticker."),
-    "Training": ("EXPERIMENTS / TRAINING", "Experiment lab", "Latih agen reinforcement learning dengan konfigurasi yang dapat direproduksi."),
-    "Model & Evaluasi": ("EXPERIMENTS / MODELS", "Models & evaluation", "Load artefak model dan ukur performa out-of-sample secara objektif."),
-    "AI Research Copilot": ("STOCKS / RESEARCH", "AI research", "Sintesis fundamental, berita, sentimen, dan konteks model sebagai bukti tambahan."),
-    "Monitoring & Notifikasi": ("MONITOR", "Monitoring & notifications", "Pantau kondisi harian IDX dan audit pengiriman notifikasi."),
-    "Paper Trading": ("CONNECTIONS / PAPER", "Paper trading", "Uji alur eksekusi tanpa modal riil pada instrumen yang didukung broker."),
-    "Dokumentasi & Output": ("SYSTEM / DOCUMENTATION", "Documentation", "Panduan operasi, mekanisme engine, katalog output, dan batas penggunaan."),
+    "Beranda": ("RINGKASAN", "Ruang keputusan", "Status pasar, kesiapan eksperimen, dan langkah paling relevan berikutnya."),
+    "Konfigurasi": ("EKSPERIMEN / KONFIGURASI", "Konfigurasi eksperimen", "Atur universe, periode, fitur, biaya, dan parameter model hanya saat diperlukan."),
+    "Perencana Investasi": ("KEPUTUSAN / MOMENTUM", "Perencana investasi", "Gabungkan bukti kuantitatif, teknikal, fundamental, dan rezim pasar dalam satu alur."),
+    "Data Market": ("EKSPERIMEN / DATA", "Data & kualitas", "Muat, validasi, dan audit histori pasar sebelum digunakan oleh model."),
+    "Data Sources & Broker": ("SISTEM / KONEKSI", "Koneksi data", "Kelola sumber data, broker simulasi, provenance, dan kesiapan provider."),
+    "Analisa IDX": ("SAHAM / PEMINDAI PASAR", "Intelijen saham", "Tinjau momentum, risiko, likuiditas, korelasi, dan bukti historis ticker."),
+    "Training": ("EKSPERIMEN / TRAINING", "Eksperimen model", "Latih agen reinforcement learning dengan konfigurasi yang dapat direproduksi."),
+    "Model & Evaluasi": ("EKSPERIMEN / MODEL", "Model & evaluasi", "Validasi artefak dan ukur performa out-of-sample secara objektif."),
+    "AI Research Copilot": ("SAHAM / RISET", "Riset AI", "Sintesis fundamental, berita, sentimen, dan konteks model sebagai bukti tambahan."),
+    "Monitoring & Notifikasi": ("OPERASIONAL / MONITOR", "Monitor & notifikasi", "Pantau kondisi IDX, kesiapan proses, dan audit pengiriman notifikasi."),
+    "Paper Trading": ("OPERASIONAL / SIMULASI", "Simulasi trading", "Uji alur eksekusi tanpa modal riil pada instrumen yang didukung broker."),
+    "Dokumentasi & Output": ("SISTEM / DOKUMENTASI", "Dokumentasi", "Panduan operasi, mekanisme engine, katalog output, dan batas penggunaan."),
 }
 
 
@@ -119,31 +127,34 @@ NEZU_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 :root {
-  --nezu-canvas: #f5f6f2;
+  --nezu-canvas: #f6f7f4;
   --nezu-surface: #ffffff;
-  --nezu-muted: #eef1ec;
-  --nezu-ink: #202923;
-  --nezu-ink-muted: #68716b;
-  --nezu-border: #dde2dc;
-  --nezu-moss: #356a52;
-  --nezu-moss-dark: #28523f;
-  --nezu-moss-soft: #ddebe3;
+  --nezu-muted: #f0f2ee;
+  --nezu-ink: #18211b;
+  --nezu-ink-muted: #667069;
+  --nezu-border: #dfe4de;
+  --nezu-moss: #2f6b50;
+  --nezu-moss-dark: #22513c;
+  --nezu-moss-soft: #e1eee6;
   --nezu-amber: #a97732;
   --nezu-amber-soft: #f5e9d7;
   --nezu-clay: #a95954;
   --nezu-info: #566a79;
+  --nezu-shadow-sm: 0 1px 2px rgba(24,33,27,.04), 0 8px 24px rgba(24,33,27,.035);
+  --nezu-shadow-md: 0 12px 36px rgba(24,33,27,.075);
 }
 html, body, [class*="css"], .stApp {font-family: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;}
 .stApp {background: var(--nezu-canvas); color: var(--nezu-ink);}
-[data-testid="stHeader"] {background: rgba(245,246,242,.88); backdrop-filter: blur(12px);}
-[data-testid="stToolbar"] {right: 1.25rem;}
-.block-container {max-width: 1480px; padding: 1rem 2rem 4rem;}
+[data-testid="stHeader"] {background: transparent; height:0;}
+[data-testid="stToolbar"], [data-testid="stDecoration"], [data-testid="stStatusWidget"], #MainMenu, footer {display:none !important;}
+.block-container {max-width: 1320px; padding: 1.45rem 2.25rem 5rem;}
 [data-testid="stSidebar"] {
   background: var(--nezu-surface);
   border-right: 1px solid var(--nezu-border);
+  min-width:280px; max-width:280px;
 }
-[data-testid="stSidebarContent"] {padding: .7rem .85rem 2rem;}
-.nezu-brand {display:flex; align-items:center; gap:.75rem; padding:.55rem .35rem 1.1rem;}
+[data-testid="stSidebarContent"] {padding: 1rem .85rem 2rem;}
+.nezu-brand {display:flex; align-items:center; gap:.75rem; padding:.35rem .35rem 1.2rem;}
 .nezu-mark {
   width:40px; height:40px; border-radius:12px; display:grid; place-items:center;
   color:white; background:var(--nezu-moss); font-weight:700; letter-spacing:-.04em;
@@ -191,14 +202,15 @@ html, body, [class*="css"], .stApp {font-family: "DM Sans", -apple-system, Blink
 .nezu-dot {display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--nezu-moss); margin-right:.38rem;}
 .nezu-dot.neutral {background:var(--nezu-info);}
 .nezu-topbar {
-  min-height:44px; display:flex; align-items:center; justify-content:space-between; gap:1rem;
-  border-bottom:1px solid var(--nezu-border); color:var(--nezu-ink-muted); font-size:.76rem; margin-bottom:1.75rem;
+  min-height:40px; display:flex; align-items:center; justify-content:space-between; gap:1rem;
+  color:var(--nezu-ink-muted); font-size:.74rem; margin-bottom:1.35rem;
+  padding:.25rem 0 .85rem; border-bottom:1px solid var(--nezu-border);
 }
 .nezu-topbar strong {color:var(--nezu-ink); font-weight:600;}
-.nezu-page-head {margin-bottom:1.5rem; max-width:850px;}
+.nezu-page-head {margin-bottom:1.65rem; max-width:780px;}
 .nezu-eyebrow {font-size:.7rem; letter-spacing:.14em; font-weight:700; color:var(--nezu-moss); margin-bottom:.38rem;}
-.nezu-page-head h1 {font-size:2rem; line-height:1.2; letter-spacing:-.035em; color:var(--nezu-ink); margin:0 0 .45rem; font-weight:650;}
-.nezu-page-head p {font-size:.94rem; line-height:1.6; color:var(--nezu-ink-muted); margin:0;}
+.nezu-page-head h1 {font-size:2.15rem; line-height:1.12; letter-spacing:-.042em; color:var(--nezu-ink); margin:0 0 .5rem; font-weight:700;}
+.nezu-page-head p {font-size:.92rem; line-height:1.55; color:var(--nezu-ink-muted); margin:0;}
 .nezu-hero {
   padding:1.35rem 1.45rem; border:1px solid var(--nezu-border); border-radius:16px;
   background:linear-gradient(135deg, #ffffff 0%, #edf5ef 100%); margin-bottom:1rem;
@@ -208,7 +220,7 @@ html, body, [class*="css"], .stApp {font-family: "DM Sans", -apple-system, Blink
 .nezu-hero p {color:var(--nezu-ink-muted); margin:0; max-width:760px; line-height:1.55;}
 .nezu-status-card {
   min-height:128px; padding:1rem; border:1px solid var(--nezu-border); border-radius:14px;
-  background:var(--nezu-surface); box-shadow:0 8px 24px rgba(32,41,35,.035);
+  background:var(--nezu-surface); box-shadow:var(--nezu-shadow-sm);
 }
 .nezu-status-label {font-size:.66rem; letter-spacing:.09em; color:var(--nezu-ink-muted); font-weight:700;}
 .nezu-status-value {font-size:1.05rem; line-height:1.3; color:var(--nezu-ink); font-weight:650; margin:.58rem 0 .32rem;}
@@ -221,40 +233,63 @@ html, body, [class*="css"], .stApp {font-family: "DM Sans", -apple-system, Blink
 .nezu-step b {display:block; width:24px; height:24px; border-radius:8px; background:var(--nezu-moss-soft); color:var(--nezu-moss-dark); text-align:center; line-height:24px; font-size:.72rem; margin-bottom:.55rem;}
 .nezu-step span {font-size:.75rem; line-height:1.35; font-weight:600; color:var(--nezu-ink);}
 h1, h2, h3 {color:var(--nezu-ink); letter-spacing:-.02em;}
-h3 {font-size:1.08rem !important; margin-top:1.6rem !important;}
+h3 {font-size:1.05rem !important; margin-top:1.4rem !important; font-weight:700 !important;}
+[data-testid="stVerticalBlock"] {gap:.72rem;}
+[data-testid="stForm"] {
+  border:1px solid var(--nezu-border); border-radius:16px; padding:1.1rem 1.15rem 1.2rem;
+  background:var(--nezu-surface); box-shadow:var(--nezu-shadow-sm);
+}
+[data-testid="stWidgetLabel"] p {font-size:.78rem; font-weight:600; color:var(--nezu-ink);}
+[data-testid="stCaptionContainer"] {color:var(--nezu-ink-muted);}
 [data-testid="stMetric"] {
   background:var(--nezu-surface); padding:.92rem 1rem; border:1px solid var(--nezu-border);
-  border-radius:14px; box-shadow:0 8px 24px rgba(32,41,35,.03);
+  border-radius:14px; box-shadow:var(--nezu-shadow-sm);
 }
 [data-testid="stMetricLabel"] {color:var(--nezu-ink-muted);}
 [data-testid="stMetricValue"] {color:var(--nezu-ink); font-variant-numeric:tabular-nums;}
 .stButton > button, .stDownloadButton > button {
-  border-radius:10px; min-height:40px; border-color:var(--nezu-border); font-weight:600;
+  border-radius:10px; min-height:42px; border-color:var(--nezu-border); font-weight:650;
   box-shadow:none; transition:all .16s ease; background:var(--nezu-surface); color:var(--nezu-ink);
 }
-.stButton > button:hover, .stDownloadButton > button:hover {border-color:var(--nezu-moss); color:var(--nezu-moss-dark);}
+.stButton > button:hover, .stDownloadButton > button:hover {border-color:var(--nezu-moss); color:var(--nezu-moss-dark); transform:translateY(-1px); box-shadow:var(--nezu-shadow-sm);}
 .stButton > button[kind="primary"] {background:var(--nezu-moss); border-color:var(--nezu-moss); color:white;}
 .stButton > button[kind="primary"]:hover {background:var(--nezu-moss-dark); color:white;}
+[data-testid="stButton"] button:disabled {opacity:.55; transform:none; box-shadow:none;}
 [data-baseweb="input"] > div, [data-baseweb="select"] > div, [data-baseweb="textarea"] {
   border-color:var(--nezu-border) !important; border-radius:10px !important; background:var(--nezu-surface) !important;
+  min-height:42px;
 }
-[data-baseweb="tab-list"] {gap:.35rem; border-bottom:1px solid var(--nezu-border);}
-[data-baseweb="tab"] {border-radius:9px 9px 0 0; color:var(--nezu-ink-muted);}
-[aria-selected="true"][data-baseweb="tab"] {color:var(--nezu-moss-dark); font-weight:600; background:var(--nezu-moss-soft);}
+[data-baseweb="input"]:focus-within > div, [data-baseweb="select"]:focus-within > div, [data-baseweb="textarea"]:focus-within {border-color:var(--nezu-moss) !important; box-shadow:0 0 0 3px rgba(47,107,80,.1) !important;}
+[data-baseweb="tab-list"] {gap:.25rem; border-bottom:1px solid var(--nezu-border); padding-bottom:.2rem;}
+[data-baseweb="tab"] {border-radius:9px; color:var(--nezu-ink-muted); padding:.55rem .8rem;}
+[aria-selected="true"][data-baseweb="tab"] {color:var(--nezu-moss-dark); font-weight:650; background:var(--nezu-moss-soft);}
 [data-testid="stExpander"] {background:var(--nezu-surface); border:1px solid var(--nezu-border); border-radius:12px; overflow:hidden;}
 [data-testid="stExpander"] summary, [data-testid="stExpander"] summary p {color:var(--nezu-ink) !important;}
-[data-testid="stDataFrame"] {border:1px solid var(--nezu-border); border-radius:12px; overflow:hidden; background:var(--nezu-surface);}
-[data-testid="stAlert"] {border-radius:12px; border-width:1px;}
+[data-testid="stDataFrame"] {border:1px solid var(--nezu-border); border-radius:14px; overflow:hidden; background:var(--nezu-surface); box-shadow:var(--nezu-shadow-sm);}
+[data-testid="stAlert"] {border-radius:12px; border-width:1px; font-size:.84rem;}
+.nezu-section-head {display:flex; justify-content:space-between; gap:1rem; align-items:flex-end; margin:1.3rem 0 .85rem;}
+.nezu-section-title {font-size:1.05rem; font-weight:700; letter-spacing:-.02em; color:var(--nezu-ink);}
+.nezu-section-copy {font-size:.78rem; color:var(--nezu-ink-muted); margin-top:.2rem; line-height:1.45;}
+.nezu-section-badge {white-space:nowrap; font-size:.66rem; font-weight:700; letter-spacing:.08em; color:var(--nezu-moss-dark); background:var(--nezu-moss-soft); border-radius:999px; padding:.3rem .6rem;}
+.nezu-empty {border:1px dashed #cbd3cc; border-radius:14px; background:rgba(255,255,255,.58); padding:1.3rem; text-align:center; color:var(--nezu-ink-muted);}
+.nezu-empty strong {display:block; color:var(--nezu-ink); margin-bottom:.25rem; font-size:.9rem;}
+.nezu-empty span {font-size:.78rem; line-height:1.5;}
+.nezu-account-card {border:1px solid var(--nezu-border); border-radius:12px; padding:.75rem .8rem; margin:.6rem .2rem; background:#fbfcfa;}
+.nezu-account-name {font-size:.8rem; font-weight:700; color:var(--nezu-ink);}
+.nezu-account-meta {font-size:.68rem; color:var(--nezu-ink-muted); margin-top:.18rem;}
 hr {border-color:var(--nezu-border) !important;}
 code {color:var(--nezu-moss-dark); background:var(--nezu-muted); border-radius:5px; padding:.08rem .28rem;}
 @media (max-width: 1100px) {
   .nezu-workflow {grid-template-columns:repeat(4, 1fr);}
   .block-container {padding-left:1.1rem; padding-right:1.1rem;}
+  [data-testid="stSidebar"] {min-width:250px; max-width:250px;}
 }
 @media (max-width: 700px) {
   .nezu-topbar {align-items:flex-start; flex-direction:column; padding-bottom:.7rem;}
   .nezu-workflow {grid-template-columns:repeat(2, 1fr);}
   .nezu-page-head h1 {font-size:1.65rem;}
+  .block-container {padding:.9rem .85rem 3rem;}
+  .nezu-section-head {align-items:flex-start; flex-direction:column; gap:.45rem;}
 }
 </style>
 """
@@ -447,6 +482,32 @@ def _status_card(label: str, value: str, note: str) -> str:
     )
 
 
+def _section_header(title: str, description: str, badge: str | None = None) -> None:
+    badge_html = (
+        f'<div class="nezu-section-badge">{escape(badge.upper())}</div>' if badge else ""
+    )
+    st.markdown(
+        '<div class="nezu-section-head">'
+        '<div>'
+        f'<div class="nezu-section-title">{escape(title)}</div>'
+        f'<div class="nezu-section-copy">{escape(description)}</div>'
+        '</div>'
+        f'{badge_html}'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def _empty_state(title: str, description: str) -> None:
+    st.markdown(
+        '<div class="nezu-empty">'
+        f'<strong>{escape(title)}</strong>'
+        f'<span>{escape(description)}</span>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+
 def _parse_json(value: str, label: str) -> dict[str, Any]:
     try:
         parsed = json.loads(value)
@@ -557,7 +618,7 @@ def _apply_config_payload(payload: dict[str, Any]) -> None:
     st.session_state["loaded_config_name"] = payload.get("model_path", "konfigurasi")
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(ttl=3600, max_entries=8, show_spinner=False)
 def load_market_data(
     tickers: tuple[str, ...], source: str, start: str, end: str, interval: str,
     indicators: tuple[str, ...], use_vix: bool, source_kwargs: tuple[tuple[str, str], ...],
@@ -570,6 +631,37 @@ def load_market_data(
     if use_vix:
         data = processor.add_vix(data)
     return data
+
+
+def _downsample_frame(frame: pd.DataFrame | pd.Series, max_points: int = 1_000):
+    """Keep browser chart payloads bounded while preserving both endpoints."""
+    if len(frame) <= max_points:
+        return frame
+    positions = np.linspace(0, len(frame) - 1, max_points, dtype=int)
+    return frame.iloc[np.unique(positions)]
+
+
+@st.cache_data(max_entries=6, show_spinner=False)
+def _cached_idx_analysis(data: pd.DataFrame, risk_free_rate: float):
+    from finrl.analytics.indonesia import build_idx_analysis
+
+    return build_idx_analysis(data, risk_free_rate=risk_free_rate)
+
+
+def _get_idx_analysis(data: pd.DataFrame, risk_free_rate: float):
+    """Avoid repeatedly hashing a large frame while it remains active in-session."""
+    cached = st.session_state.get("idx_analysis_cache")
+    cache_key = (id(data), float(risk_free_rate))
+    if isinstance(cached, dict) and cached.get("key") == cache_key:
+        return cached["value"]
+    value = _cached_idx_analysis(data, risk_free_rate)
+    st.session_state["idx_analysis_cache"] = {"key": cache_key, "value": value}
+    return value
+
+
+@st.cache_data(max_entries=4, show_spinner=False)
+def _dataframe_csv_bytes(data: pd.DataFrame) -> bytes:
+    return data.to_csv(index=False).encode("utf-8")
 
 
 @st.cache_data(ttl=900, show_spinner=False)
@@ -623,7 +715,7 @@ def load_company_research_context(ticker: str) -> dict[str, Any]:
 
 
 def build_config() -> ExperimentConfig:
-    with st.sidebar.expander("Konfigurasi eksperimen", expanded=False):
+    with st.sidebar.expander("Pengaturan eksperimen", expanded=False):
         st.caption("Data, agent, periode, dan artefak model aktif.")
         uploaded_config = st.file_uploader(
             "Load konfigurasi / manifest",
@@ -809,8 +901,84 @@ def build_config() -> ExperimentConfig:
     )
 
 
+def _config_from_session_state() -> ExperimentConfig:
+    """Build the active config without creating Streamlit widgets on every rerun."""
+    state = st.session_state
+    universe = state.get("cfg_universe", UNIVERSES[0])
+    presets = {
+        "LQ45 Indonesia": LQ45_TICKER,
+        "SRI-KEHATI Indonesia": SRI_KEHATI_TICKER,
+        "Custom Indonesia": ["BBCA.JK", "BBRI.JK", "BMRI.JK", "TLKM.JK", "ASII.JK"],
+        "Custom global": DOW_30_TICKER[:5],
+    }
+    ticker_text = state.get(
+        f"tickers_{universe}", ", ".join(presets.get(universe, presets[UNIVERSES[0]]))
+    )
+    library = state.get("cfg_library", SUPPORTED_LIBRARIES[0])
+    if library not in SUPPORTED_LIBRARIES:
+        library = SUPPORTED_LIBRARIES[0]
+    model = state.get(f"model_{library}", SUPPORTED_MODELS[library][0])
+    if model not in SUPPORTED_MODELS[library]:
+        model = SUPPORTED_MODELS[library][0]
+    raw_params = state.get(f"params_{library}", DEFAULT_AGENT_PARAMS[library])
+    params = (
+        _parse_json(raw_params, "Parameter agent")
+        if isinstance(raw_params, str)
+        else dict(raw_params)
+    )
+    is_idx = "Indonesia" in universe or any(
+        ticker.endswith(".JK") for ticker in _tickers(ticker_text)
+    )
+
+    def _date(key: str, default: str) -> str:
+        return pd.Timestamp(state.get(key, default)).date().isoformat()
+
+    return ExperimentConfig(
+        tickers=_tickers(ticker_text),
+        data_source=state.get("cfg_source", "yahoofinance"),
+        interval=state.get("cfg_interval", "1D"),
+        train_start=_date("cfg_train_start", "2014-01-01"),
+        train_end=_date("cfg_train_end", "2020-12-31"),
+        test_start=_date("cfg_test_start", "2021-01-01"),
+        test_end=_date("cfg_test_end", "2021-12-31"),
+        indicators=list(state.get("cfg_indicators", INDICATORS)),
+        use_vix=bool(state.get(f"use_vix_{universe}", not is_idx)),
+        drl_lib=library,
+        model_name=model,
+        model_path=state.get(f"path_{library}_{model}", f"trained_models/{library}_{model}"),
+        timesteps=int(state.get("cfg_timesteps", 50_000)),
+        agent_params=params,
+        universe=universe,
+        risk_free_rate=float(state.get("cfg_risk_free", 6.0)) / 100,
+        buy_cost_pct=float(state.get("cfg_buy_cost", 0.16 if is_idx else 0.10)) / 100,
+        sell_cost_pct=float(state.get("cfg_sell_cost", 0.35 if is_idx else 0.10)) / 100,
+        lot_size=int(state.get("cfg_lot_size", 100 if is_idx else 1)),
+        stop_loss_pct=float(state.get("cfg_stop_loss", 0.0)) / 100,
+    )
+
+
+def show_configuration(config: ExperimentConfig) -> None:
+    _section_header(
+        "Konfigurasi aktif",
+        "Pengaturan lengkap tersedia di panel kiri hanya pada halaman ini agar halaman lain tetap ringan.",
+        "Eksperimen",
+    )
+    a, b, c, d = st.columns(4)
+    a.metric("Universe", config.universe)
+    b.metric("Ticker", len(config.tickers))
+    c.metric("Interval", config.interval)
+    d.metric("Model", f"{config.drl_lib} / {config.model_name}")
+    st.caption(
+        f"Periode train {config.train_start} – {config.train_end} · "
+        f"test {config.test_start} – {config.test_end} · {len(config.indicators)} indikator"
+    )
+    with st.expander("Lihat konfigurasi JSON"):
+        st.json(asdict(config))
+
+
 def run_training(config: ExperimentConfig, source_kwargs: dict[str, str]) -> Any:
     from finrl.train import train
+    from finrl.meta.env_stock_trading.env_stocktrading_np import StockTradingEnv
 
     Path(config.model_path).parent.mkdir(parents=True, exist_ok=True)
     shared = dict(
@@ -845,6 +1013,7 @@ def run_training(config: ExperimentConfig, source_kwargs: dict[str, str]) -> Any
 
 def run_backtest(config: ExperimentConfig, source_kwargs: dict[str, str]) -> list[float]:
     from finrl.test import test
+    from finrl.meta.env_stock_trading.env_stocktrading_np import StockTradingEnv
 
     values = test(
         config.test_start, config.test_end, config.tickers, config.data_source,
@@ -962,21 +1131,21 @@ def show_home(config: ExperimentConfig) -> None:
     st.markdown(
         """
         <div class="nezu-hero">
-          <div class="nezu-hero-kicker">WORKSPACE AKTIF · HUMAN IN CONTROL</div>
-          <h2>Apa yang patut ditinjau hari ini?</h2>
-          <p>NEZU menyatukan data, bukti teknikal, reinforcement learning, dan konteks riset.
-          Setiap output adalah dukungan keputusan—bukan instruksi beli atau jual otomatis.</p>
+          <div class="nezu-hero-kicker">WORKSPACE AKTIF · KEPUTUSAN TETAP DI TANGAN ANDA</div>
+          <h2>Mulai dari bukti, bukan asumsi.</h2>
+          <p>NEZU menyatukan kualitas data, sinyal teknikal, reinforcement learning, dan konteks riset
+          menjadi alur keputusan yang dapat ditelusuri. Setiap output adalah bahan evaluasi, bukan instruksi transaksi.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
     action_a, action_b, action_space = st.columns((1, 1, 3.5))
     action_a.button(
-        "Review market", type="primary", use_container_width=True,
+        "Tinjau pasar", type="primary", use_container_width=True,
         on_click=_go_to, args=("Analisa IDX",),
     )
     action_b.button(
-        "Run analysis", use_container_width=True,
+        "Siapkan data", use_container_width=True,
         on_click=_go_to, args=("Data Market",),
     )
 
@@ -987,42 +1156,50 @@ def show_home(config: ExperimentConfig) -> None:
     )
     b.markdown(
         _status_card(
-            "Data quality", "Siap dianalisis" if data is not None else "Menunggu data",
+            "Kualitas data", "Siap dianalisis" if data is not None else "Menunggu data",
             "Dataset tersedia di memori sesi" if data is not None else "Muat dan validasi sebelum eksperimen",
         ),
         unsafe_allow_html=True,
     )
     c.markdown(
         _status_card(
-            "Active model", config.model_name.upper() if artifact else "Belum tersedia",
+            "Model aktif", config.model_name.upper() if artifact else "Belum tersedia",
             "Artefak ditemukan · research only" if artifact else "Training atau load model diperlukan",
         ),
         unsafe_allow_html=True,
     )
     d.markdown(
         _status_card(
-            "Evaluation", "OOS tersedia" if equity is not None else "Belum dijalankan",
+            "Evaluasi", "OOS tersedia" if equity is not None else "Belum dijalankan",
             "Equity curve siap direview" if equity is not None else "Jalankan backtest out-of-sample",
         ),
         unsafe_allow_html=True,
     )
 
-    st.markdown("### Alur keputusan & eksperimen")
+    _section_header(
+        "Alur keputusan & eksperimen",
+        "Tujuh langkah terkontrol dari konfigurasi sampai simulasi eksekusi.",
+        "Workflow",
+    )
     st.markdown(
         """
         <div class="nezu-workflow">
           <div class="nezu-step"><b>1</b><span>Konfigurasi</span></div>
           <div class="nezu-step"><b>2</b><span>Data & QA</span></div>
           <div class="nezu-step"><b>3</b><span>Analisa</span></div>
-          <div class="nezu-step"><b>4</b><span>Train RL</span></div>
-          <div class="nezu-step"><b>5</b><span>Model registry</span></div>
+          <div class="nezu-step"><b>4</b><span>Latih model</span></div>
+          <div class="nezu-step"><b>5</b><span>Validasi artefak</span></div>
           <div class="nezu-step"><b>6</b><span>Evaluasi OOS</span></div>
-          <div class="nezu-step"><b>7</b><span>Paper test</span></div>
+          <div class="nezu-step"><b>7</b><span>Simulasi</span></div>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    st.markdown("### Status kesiapan")
+    _section_header(
+        "Status kesiapan",
+        "Gunakan tabel ini untuk melihat hambatan dan langkah berikutnya.",
+        "Readiness",
+    )
     status = pd.DataFrame(
         {
             "Tahap": ["Konfigurasi", "Data", "Model", "Evaluasi"],
@@ -1044,7 +1221,11 @@ def show_home(config: ExperimentConfig) -> None:
 
 
 def show_data(config: ExperimentConfig, source_kwargs: dict[str, str]) -> None:
-    st.subheader("Data dan sinyal")
+    _section_header(
+        "Data dan sinyal",
+        "Unduh OHLCV, hitung indikator, lalu periksa kelengkapan sebelum eksperimen.",
+        "Tahap 1",
+    )
     period_errors = experiment_period_errors(
         config.train_start, config.train_end, config.test_start, config.test_end
     )
@@ -1084,10 +1265,16 @@ def show_data(config: ExperimentConfig, source_kwargs: dict[str, str]) -> None:
             with st.expander("Data quality & coverage", expanded=True):
                 st.dataframe(coverage, use_container_width=True)
 
-        table_tab, history_tab = st.tabs(("Preview data", "Histori per ticker"))
-        with table_tab:
+        data_view = st.segmented_control(
+            "Tampilan data",
+            ("Preview data", "Histori per ticker", "Perbandingan harga"),
+            default="Preview data",
+            key="data_view",
+            label_visibility="collapsed",
+        )
+        if data_view == "Preview data":
             st.dataframe(data.tail(100), use_container_width=True)
-        with history_tab:
+        elif data_view == "Histori per ticker":
             if "tic" in data.columns:
                 selected_ticker = st.selectbox(
                     "Pilih ticker", sorted(data["tic"].dropna().unique()), key="history_ticker"
@@ -1100,17 +1287,24 @@ def show_data(config: ExperimentConfig, source_kwargs: dict[str, str]) -> None:
                     if column in ticker_data.columns
                 ]
                 if chart_columns:
-                    st.line_chart(ticker_data[chart_columns])
+                    st.line_chart(_downsample_frame(ticker_data[chart_columns]))
                 st.dataframe(ticker_data.tail(250), use_container_width=True)
+        elif {date_col, "tic", "close"}.issubset(data.columns):
+            chart = data.pivot_table(
+                index=date_col, columns="tic", values="close", aggfunc="last"
+            )
+            st.line_chart(_downsample_frame(chart))
         st.download_button(
             "Unduh seluruh data pasar (CSV)",
-            data.to_csv(index=False).encode("utf-8"),
+            _dataframe_csv_bytes(data),
             "nezu_market_data.csv",
             "text/csv",
         )
-        if {date_col, "tic", "close"}.issubset(data.columns):
-            chart = data.pivot_table(index=date_col, columns="tic", values="close", aggfunc="last")
-            st.line_chart(chart)
+    else:
+        _empty_state(
+            "Belum ada dataset aktif",
+            "Pastikan periode valid, lalu pilih Muat & validasi data untuk memulai.",
+        )
 
 
 def show_provider_hub(config: ExperimentConfig) -> None:
@@ -1133,7 +1327,11 @@ def show_provider_hub(config: ExperimentConfig) -> None:
         return
     by_id = {profile.id: profile for profile in profiles}
 
-    st.subheader("Licensed market data & broker gateway")
+    _section_header(
+        "Gateway data & broker",
+        "Bandingkan sumber, validasi kesehatan koneksi, dan tetapkan provider utama.",
+        "Read only",
+    )
     st.caption(
         "Satu ticker aktif dapat dibandingkan pada seluruh sumber. Harga berlisensi, "
         "quote broker, dan sumber research sengaja diberi tier berbeda agar provenance "
@@ -1424,19 +1622,17 @@ vendor melewati sandbox, risk limits, audit, reconciliation, dan kill-switch tes
 
 
 def show_idx_analysis(config: ExperimentConfig) -> None:
-    from finrl.analytics.indonesia import build_idx_analysis
-
-    st.subheader("Analisa supermasif saham Indonesia")
-    st.caption(
-        "Screening lintas saham, momentum, risiko, likuiditas, trend, korelasi, "
-        "drawdown, dan market breadth. Skor adalah alat riset, bukan rekomendasi investasi."
+    _section_header(
+        "Pemindai saham Indonesia",
+        "Screening momentum, risiko, likuiditas, tren, korelasi, drawdown, dan breadth pasar.",
+        "Riset",
     )
     data = st.session_state.get("market_data")
     if data is None:
         st.info("Muat data pada tab Data terlebih dahulu.")
         return
     try:
-        analysis = build_idx_analysis(data, risk_free_rate=config.risk_free_rate)
+        analysis = _get_idx_analysis(data, config.risk_free_rate)
     except Exception as error:
         notify_error(error, title="Gagal Menjalankan Analisis IDX")
         return
@@ -1472,10 +1668,14 @@ def show_idx_analysis(config: ExperimentConfig) -> None:
     c.metric("Di atas SMA20", f"{latest_breadth['above_sma20_pct']:.1f}%")
     d.metric("Di atas SMA50", f"{latest_breadth['above_sma50_pct']:.1f}%")
 
-    rank_tab, performance_tab, risk_tab, correlation_tab, breadth_tab = st.tabs(
-        ("Ranking", "Performa", "Risk", "Korelasi", "Breadth")
+    analysis_view = st.segmented_control(
+        "Tampilan analisis",
+        ("Ranking", "Performa", "Risk", "Korelasi", "Breadth"),
+        default="Ranking",
+        key="idx_analysis_view",
+        label_visibility="collapsed",
     )
-    with rank_tab:
+    if analysis_view == "Ranking":
         display_columns = [
             "composite_score", "price", "return_1m", "return_3m", "return_6m",
             "return_12m", "sharpe", "sortino", "annual_volatility",
@@ -1488,20 +1688,24 @@ def show_idx_analysis(config: ExperimentConfig) -> None:
             "Unduh screener CSV", screener.to_csv().encode("utf-8"),
             "idx_screener.csv", "text/csv",
         )
-    with performance_tab:
+    elif analysis_view == "Performa":
         selected = st.multiselect(
             "Bandingkan saham", filtered.index.tolist(), default=filtered.index[:5].tolist(),
         )
         if selected:
-            st.line_chart(analysis.normalized_prices[selected].dropna(how="all"))
-    with risk_tab:
+            st.line_chart(
+                _downsample_frame(analysis.normalized_prices[selected].dropna(how="all"))
+            )
+    elif analysis_view == "Risk":
         risk_columns = [
             "annual_volatility", "max_drawdown", "daily_var_95", "daily_cvar_95",
             "sharpe", "sortino",
         ]
         st.dataframe(filtered[risk_columns], use_container_width=True)
-        st.line_chart(analysis.drawdown[filtered.index[:10]].dropna(how="all"))
-    with correlation_tab:
+        st.line_chart(
+            _downsample_frame(analysis.drawdown[filtered.index[:10]].dropna(how="all"))
+        )
+    elif analysis_view == "Korelasi":
         correlation_names = filtered.index[:20]
         matrix = analysis.correlation.loc[correlation_names, correlation_names].round(3)
         heatmap_data = (
@@ -1531,13 +1735,21 @@ def show_idx_analysis(config: ExperimentConfig) -> None:
         st.caption("Merah = bergerak searah, biru = berlawanan, putih = hubungan linear lemah.")
         with st.expander("Lihat matriks angka"):
             st.dataframe(matrix, use_container_width=True)
-    with breadth_tab:
-        st.line_chart(analysis.breadth)
+    elif analysis_view == "Breadth":
+        st.line_chart(_downsample_frame(analysis.breadth))
 
 
 def show_training(config: ExperimentConfig, source_kwargs: dict[str, str]) -> None:
-    st.subheader("Training")
-    st.caption("Model disimpan ke path yang ditentukan pada konfigurasi.")
+    _section_header(
+        "Training model",
+        "Tinjau parameter aktif sebelum memulai proses komputasi yang berjalan lama.",
+        "Tahap 3",
+    )
+    summary_a, summary_b, summary_c = st.columns(3)
+    summary_a.metric("Library", config.drl_lib)
+    summary_b.metric("Algoritma", config.model_name.upper())
+    summary_c.metric("Timesteps", f"{config.timesteps:,}")
+    st.caption(f"Artefak akan disimpan ke: {config.model_path}")
     period_errors = experiment_period_errors(
         config.train_start, config.train_end, config.test_start, config.test_end
     )
@@ -1556,9 +1768,10 @@ def show_training(config: ExperimentConfig, source_kwargs: dict[str, str]) -> No
 
 
 def show_backtest(config: ExperimentConfig, source_kwargs: dict[str, str]) -> None:
-    st.subheader("Model & evaluasi out-of-sample")
-    st.caption(
-        "Load dan validasi artefak model, lalu ukur hasil inferensi strategi terhadap benchmark."
+    _section_header(
+        "Model & evaluasi out-of-sample",
+        "Validasi kompatibilitas artefak sebelum membandingkan strategi dengan benchmark.",
+        "Tahap 4",
     )
     artifact = _resolve_model_path(config.model_path)
     manifest = _load_manifest(config.model_path)
@@ -1636,20 +1849,24 @@ def show_backtest(config: ExperimentConfig, source_kwargs: dict[str, str]) -> No
         b.metric("Max drawdown", f"{strategy_drawdown:.2f}%")
         c.metric("Sharpe", f"{strategy_sharpe:.2f}" if np.isfinite(strategy_sharpe) else "N/A")
 
-        performance_tab, risk_tab, evidence_tab = st.tabs(
-            ("Performa vs benchmark", "Drawdown", "Bukti kelayakan")
+        evaluation_view = st.segmented_control(
+            "Tampilan evaluasi",
+            ("Performa vs benchmark", "Drawdown", "Bukti kelayakan"),
+            default="Performa vs benchmark",
+            key="evaluation_view",
+            label_visibility="collapsed",
         )
-        with performance_tab:
+        if evaluation_view == "Performa vs benchmark":
             st.info(
                 "Grafik ini adalah hasil inferensi kebijakan trading pada data test, "
                 "bukan prediksi harga saham masa depan."
             )
-            st.line_chart(comparison)
+            st.line_chart(_downsample_frame(comparison))
             st.dataframe(metrics.round(3), use_container_width=True)
-        with risk_tab:
+        elif evaluation_view == "Drawdown":
             drawdown = comparison.div(comparison.cummax()).sub(1).mul(100)
-            st.line_chart(drawdown)
-        with evidence_tab:
+            st.line_chart(_downsample_frame(drawdown))
+        elif evaluation_view == "Bukti kelayakan":
             checks = pd.DataFrame(
                 {
                     "Pemeriksaan": [
@@ -1794,7 +2011,11 @@ def show_ai_research(config: ExperimentConfig) -> None:
             st.session_state.setdefault("ai_api_key", "")
         st.session_state["ai_profile_initialized"] = True
 
-    st.subheader("AI Research Copilot")
+    _section_header(
+        "Kopilot riset AI",
+        "Susun konteks yang akan dikirim, verifikasi sumber, lalu jalankan sintesis terkontrol.",
+        "External AI",
+    )
     st.caption(
         "Gabungkan metrik teknikal dan hasil reinforcement learning dengan analisis "
         "model cloud melalui gateway OpenAI-compatible."
@@ -2050,7 +2271,11 @@ def show_paper_trading(config: ExperimentConfig) -> None:
     from finrl.integrations.secure_store import load_secret
     from finrl.integrations.secure_store import save_secret
 
-    st.subheader("Paper trading Alpaca")
+    _section_header(
+        "Simulasi trading Alpaca",
+        "Validasi koneksi dan model sebelum mengirim instruksi ke akun paper.",
+        "Paper only",
+    )
     st.warning("Mode ini mengirim order ke akun paper Alpaca. Jangan gunakan kredensial akun live.")
     if any(ticker.endswith(".JK") for ticker in config.tickers):
         st.error(
@@ -2161,6 +2386,7 @@ def show_paper_trading(config: ExperimentConfig) -> None:
                 save_secret("alpaca_paper_api_key", api_key)
                 save_secret("alpaca_paper_api_secret", api_secret)
             from finrl.trade import trade
+            from finrl.meta.env_stock_trading.env_stocktrading_np import StockTradingEnv
             with st.spinner("Paper trading aktif. Hentikan proses untuk menghentikannya."):
                 trade(
                     config.test_start, config.test_end, config.tickers, config.data_source,
@@ -2199,7 +2425,11 @@ def show_monitoring(config: ExperimentConfig) -> None:
     from finrl.monitoring.telegram_monitor import MonitorConfig
     from finrl.monitoring.telegram_monitor import build_daily_report
 
-    st.subheader("Monitoring & Notifikasi")
+    _section_header(
+        "Monitoring & notifikasi",
+        "Atur jadwal, tinjau preview, dan pastikan laporan benar sebelum dikirim.",
+        "Operasional",
+    )
     st.caption(
         "Monitor kondisi teknikal IDX secara periodik dan kirim ringkasan riset ke Telegram."
     )
@@ -2367,9 +2597,10 @@ def show_monitoring(config: ExperimentConfig) -> None:
 
 def show_documentation(config: ExperimentConfig) -> None:
     """Render the user guide and collect downloadable experiment outputs."""
-    st.subheader("Dokumentasi & pusat output")
-    st.caption(
-        "Baca panduan operasional, unduh artefak sesi, dan temukan lokasi model."
+    _section_header(
+        "Dokumentasi & pusat output",
+        "Temukan panduan operasional, artefak sesi, model, dan referensi metodologi.",
+        "Reference",
     )
 
     output_tab, guide_tab, paper_tab, diagram_tab, glossary_tab = st.tabs(
@@ -2571,13 +2802,17 @@ AUTH_BRAND_NAME = "IDN Maker FINRLAB"
 AUTH_BRAND_TAGLINE = "Decision intelligence workspace"
 MAX_LOGIN_ATTEMPTS = 5
 LOGIN_LOCKOUT_SECONDS = 30
+SESSION_TIMEOUT_SECONDS = 12 * 3600
+AUTH_THROTTLE_PATH = CONFIG_DIR / "auth_throttle.json"
+AUTH_AUDIT_PATH = LOG_DIR / "auth_audit.log"
 
 AUTH_CSS = """
 <style>
 [data-testid="stSidebar"], [data-testid="collapsedControl"] {display:none;}
 .idn-auth-hero {
-  text-align:center; padding:1.7rem 1.5rem 1.3rem; border:1px solid var(--nezu-border);
-  border-radius:18px; background:linear-gradient(150deg,#ffffff 0%, #edf5ef 100%); margin-bottom:1.1rem;
+  text-align:center; padding:2rem 1.5rem 1.55rem; border:1px solid var(--nezu-border);
+  border-radius:20px; background:linear-gradient(150deg,#ffffff 0%, #edf5ef 100%); margin-bottom:1rem;
+  box-shadow:var(--nezu-shadow-md);
 }
 .idn-auth-mark {
   width:54px; height:54px; margin:0 auto .75rem; border-radius:15px; display:grid; place-items:center;
@@ -2591,7 +2826,7 @@ AUTH_CSS = """
   background:var(--nezu-moss-soft); color:var(--nezu-moss-dark); font-size:.66rem;
   font-weight:700; letter-spacing:.08em;
 }
-.idn-auth-note {font-size:.72rem; color:var(--nezu-ink-muted); text-align:center; margin-top:.9rem; line-height:1.6;}
+.idn-auth-note {font-size:.7rem; color:var(--nezu-ink-muted); text-align:center; margin-top:.85rem; line-height:1.55;}
 </style>
 """
 
@@ -2607,20 +2842,120 @@ def _auth_hero(subtitle: str, badge: str = "SECURE ACCESS") -> str:
     )
 
 
-def _load_auth_store() -> dict[str, Any] | None:
+def _log_auth_event(username: str, ok: bool, reason: str) -> None:
+    """Append a persistent JSON-line audit record (survives restarts)."""
     try:
-        from finrl.db.bridge import load_auth_store
+        LOG_DIR.mkdir(parents=True, exist_ok=True)
+        record = {
+            "ts": time.strftime("%Y-%m-%dT%H:%M:%S%z", time.localtime()),
+            "user": (username or "").strip()[:64],
+            "ok": bool(ok),
+            "reason": reason[:200],
+        }
+        with open(AUTH_AUDIT_PATH, "a", encoding="utf-8") as fh:
+            fh.write(json.dumps(record, ensure_ascii=False) + "\n")
+    except OSError:
+        pass
 
-        return load_auth_store(CONFIG_DIR)
-    except auth.AuthError as error:
-        st.error(f"Penyimpanan user bermasalah: {error}")
+
+def _load_throttle() -> dict[str, Any]:
+    try:
+        payload = json.loads(AUTH_THROTTLE_PATH.read_text(encoding="utf-8"))
+        return payload if isinstance(payload, dict) else {}
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _save_throttle(payload: dict[str, Any]) -> None:
+    try:
+        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        tmp = AUTH_THROTTLE_PATH.with_name(AUTH_THROTTLE_PATH.name + ".tmp")
+        tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        tmp.replace(AUTH_THROTTLE_PATH)
+    except OSError:
+        pass
+
+
+def _throttle_locked(username: str) -> float:
+    """Return remaining lockout seconds (persistent across restarts)."""
+    record = _load_throttle().get((username or "").strip().lower(), {})
+    if not isinstance(record, dict):
+        return 0.0
+    return float(record.get("locked_until", 0.0) or 0.0) - time.time()
+
+
+def _throttle_fail(username: str) -> float:
+    """Record a failure; return remaining lockout seconds (0 if not locked)."""
+    key = (username or "").strip().lower()
+    if not key:
+        return 0.0
+    payload = _load_throttle()
+    record = payload.get(key, {})
+    if not isinstance(record, dict):
+        record = {}
+    attempts = int(record.get("attempts", 0) or 0) + 1
+    record["attempts"] = attempts
+    record["last_at"] = time.time()
+    remaining = 0.0
+    if attempts >= MAX_LOGIN_ATTEMPTS:
+        record["locked_until"] = time.time() + LOGIN_LOCKOUT_SECONDS
+        record["attempts"] = 0
+        remaining = float(LOGIN_LOCKOUT_SECONDS)
+    payload[key] = record
+    _save_throttle(payload)
+    return remaining
+
+
+def _throttle_clear(username: str) -> None:
+    key = (username or "").strip().lower()
+    if not key:
+        return
+    payload = _load_throttle()
+    if key in payload:
+        del payload[key]
+        _save_throttle(payload)
+
+
+def _get_user_count() -> int | None:
+    """Return user count, or None when the store is unreachable (fail closed)."""
+    try:
+        from finrl.db.bridge import user_count_bridge
+
+        return user_count_bridge(CONFIG_DIR)
+    except Exception as error:
+        st.error(f"Penyimpanan akun tidak dapat diakses: {error}")
         return None
+
+
+def _get_user_role(username: str) -> str:
+    try:
+        from finrl.db.bridge import get_user_role_bridge
+
+        return get_user_role_bridge(CONFIG_DIR, username) or "admin"
+    except Exception:
+        return "admin"
+
+
+def _storage_mode() -> str:
+    """Cheap cached storage label; re-probes DB reachability at most 1x/60s."""
+    cached = st.session_state.get("storage_mode_cache")
+    cached_at = float(st.session_state.get("storage_mode_at", 0.0) or 0.0)
+    if isinstance(cached, str) and cached and time.time() - cached_at < 60:
+        return cached
+    try:
+        from finrl.db.bridge import effective_storage_mode
+
+        mode = effective_storage_mode(CONFIG_DIR)
     except Exception:
         try:
-            return auth.load_users(AUTH_USERS_PATH)
-        except auth.AuthError as error:
-            st.error(f"Penyimpanan user bermasalah: {error}")
-            return None
+            from finrl.db.database import is_db_configured
+
+            mode = "PostgreSQL" if is_db_configured() else "File lokal"
+        except Exception:
+            mode = "File lokal"
+    st.session_state["storage_mode_cache"] = mode
+    st.session_state["storage_mode_at"] = time.time()
+    return mode
 
 
 def _logout() -> None:
@@ -2631,26 +2966,27 @@ def _logout() -> None:
 
 def _render_login_page() -> None:
     st.markdown(AUTH_CSS, unsafe_allow_html=True)
-    _, center, _ = st.columns([1, 1.15, 1])
+    _, center, _ = st.columns([1.2, 1, 1.2])
     with center:
         st.markdown(
-            _auth_hero(f"{AUTH_BRAND_TAGLINE} · akses terbatas"),
+            _auth_hero(f"{AUTH_BRAND_TAGLINE} · akses administrator"),
             unsafe_allow_html=True,
         )
-        remaining = st.session_state.get("login_locked_until", 0.0) - time.time()
-        locked = remaining > 0
-        if locked:
-            notify_warning(
-                f"Terlalu banyak percobaan. Coba lagi dalam {int(remaining) + 1} detik.",
-                title="Akun Terkunci Sementara",
-            )
         with st.form("idn_maker_login"):
             username = st.text_input("Username")
             password = st.text_input("Password", type="password")
             submitted = st.form_submit_button(
-                "Masuk", type="primary", use_container_width=True, disabled=locked
+                "Masuk", type="primary", use_container_width=True
             )
-        if submitted and not locked:
+        if submitted:
+            remaining = _throttle_locked(username)
+            if remaining > 0:
+                notify_warning(
+                    f"Terlalu banyak percobaan. Coba lagi dalam {int(remaining) + 1} detik.",
+                    title="Akun Terkunci Sementara",
+                )
+                _log_auth_event(username, False, "locked_out")
+                return
             try:
                 from finrl.db.bridge import authenticate_bridge
 
@@ -2660,26 +2996,28 @@ def _render_login_page() -> None:
                     f"Penyimpanan akun tidak dapat diakses: {error}",
                     title="Login Tidak Tersedia",
                 )
+                _log_auth_event(username, False, f"store_error: {error}"[:200])
                 return
             if ok:
+                _throttle_clear(username)
                 st.session_state["authenticated"] = True
                 st.session_state["auth_user"] = username.strip()
-                st.session_state["login_attempts"] = 0
-                st.session_state["login_locked_until"] = 0.0
+                st.session_state["auth_role"] = _get_user_role(username)
+                st.session_state["auth_login_at"] = time.time()
+                _log_auth_event(username, True, "login_ok")
                 st.rerun()
             else:
-                attempts = st.session_state.get("login_attempts", 0) + 1
-                if attempts >= MAX_LOGIN_ATTEMPTS:
-                    st.session_state["login_locked_until"] = (
-                        time.time() + LOGIN_LOCKOUT_SECONDS
+                remaining = _throttle_fail(username)
+                _log_auth_event(username, False, "bad_credentials")
+                if remaining > 0:
+                    notify_warning(
+                        f"Terlalu banyak percobaan. Coba lagi dalam {int(remaining) + 1} detik.",
+                        title="Akun Terkunci Sementara",
                     )
-                    st.session_state["login_attempts"] = 0
                 else:
-                    st.session_state["login_attempts"] = attempts
-                notify_error("Username atau password salah.", title="Login Gagal")
+                    notify_error("Username atau password salah.", title="Login Gagal")
         st.markdown(
-            '<div class="idn-auth-note">Sesi berakhir saat tab ditutup atau server di-restart. '
-            "Kredensial disimpan sebagai hash PBKDF2 di PostgreSQL (fallback configs/users.json).</div>",
+            '<div class="idn-auth-note">Akses privat · sesi terenkripsi · aktivitas login diaudit</div>',
             unsafe_allow_html=True,
         )
 
@@ -2687,9 +3025,27 @@ def _render_login_page() -> None:
 def _require_authentication() -> bool:
     """Render the auth gate and return True only for an authenticated session."""
     if st.session_state.get("authenticated") and st.session_state.get("auth_user"):
+        login_at = float(st.session_state.get("auth_login_at", time.time()))
+        if time.time() - login_at > SESSION_TIMEOUT_SECONDS:
+            _logout()
+            st.markdown(AUTH_CSS, unsafe_allow_html=True)
+            notify_warning(
+                "Sesi berakhir setelah 12 jam. Silakan login kembali.",
+                title="Sesi Berakhir",
+            )
+            _render_login_page()
+            return False
         return True
     _render_login_page()
     return False
+
+
+def _require_role(*allowed: str) -> bool:
+    """Role gate for admin-only UI. All authenticated users pass when no roles given."""
+    if not allowed:
+        return True
+    role = str(st.session_state.get("auth_role", "admin") or "admin")
+    return role in allowed
 
 
 def main() -> None:
@@ -2715,15 +3071,56 @@ def main() -> None:
         st.markdown(
             """
             <div class="nezu-side-health">
-              <div><span class="nezu-dot"></span><strong>Research engine</strong> · ready</div>
-              <div><span class="nezu-dot neutral"></span><strong>Mode</strong> · decision support</div>
+              <div><span class="nezu-dot"></span><strong>Research engine</strong> · siap</div>
+              <div><span class="nezu-dot neutral"></span><strong>Mode</strong> · dukungan keputusan</div>
             </div>
-            <div class="nezu-side-label">ACTIVE EXPERIMENT</div>
             """,
             unsafe_allow_html=True,
         )
-        st.markdown('<div class="nezu-side-label">SESSION</div>', unsafe_allow_html=True)
-        st.caption(f"Masuk sebagai {st.session_state.get('auth_user', '-')}")
+        st.markdown('<div class="nezu-side-label">AKUN</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="nezu-account-card">'
+            f'<div class="nezu-account-name">{escape(str(st.session_state.get("auth_user", "-")))}</div>'
+            f'<div class="nezu-account-meta">Administrator · {escape(_storage_mode())}</div>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+        with st.expander("Keamanan akun"):
+            with st.form("session_change_password"):
+                current_pw = st.text_input("Password lama", type="password")
+                new_pw = st.text_input("Password baru (min 8)", type="password")
+                new_pw2 = st.text_input("Ulangi password baru", type="password")
+                change_submitted = st.form_submit_button(
+                    "Simpan password", use_container_width=True
+                )
+            if change_submitted:
+                if new_pw != new_pw2:
+                    st.error("Konfirmasi password baru tidak sama.")
+                else:
+                    try:
+                        from finrl.db.bridge import change_password_bridge
+
+                        change_password_bridge(
+                            CONFIG_DIR,
+                            str(st.session_state.get("auth_user", "")),
+                            current_pw,
+                            new_pw,
+                        )
+                        _log_auth_event(
+                            str(st.session_state.get("auth_user", "")),
+                            True,
+                            "password_changed",
+                        )
+                        notify_success("Password berhasil diganti.", title="Berhasil")
+                    except auth.AuthError as error:
+                        st.error(str(error))
+                        _log_auth_event(
+                            str(st.session_state.get("auth_user", "")),
+                            False,
+                            f"password_change_failed: {error}"[:200],
+                        )
+                    except Exception as error:
+                        st.error(f"Gagal mengganti password: {error}")
         st.button(
             "Keluar",
             key="logout_button",
@@ -2731,19 +3128,33 @@ def main() -> None:
             use_container_width=True,
             on_click=_logout,
         )
+    st.sidebar.markdown(
+        '<div class="nezu-side-label">EKSPERIMEN AKTIF</div>',
+        unsafe_allow_html=True,
+    )
     try:
-        config = build_config()
+        # Dozens of configuration widgets used to be constructed for every menu
+        # click. Render them only where they are edited; all other pages read the
+        # same values directly from session state.
+        config = build_config() if page == "Konfigurasi" else _config_from_session_state()
     except ValueError as error:
         st.sidebar.error(str(error))
         st.stop()
 
-    with st.sidebar.expander("Konfigurasi aktif"):
-        st.json(asdict(config))
+    st.sidebar.caption(
+        f"{config.universe} · {len(config.tickers)} ticker · {config.interval}\n\n"
+        f"{config.drl_lib} / {config.model_name}"
+    )
     source_kwargs: dict[str, str] = st.session_state.get("source_kwargs", {})
 
     _render_page_header(page)
     if page == "Beranda":
         show_home(config)
+    elif page == "Konfigurasi":
+        show_configuration(config)
+    elif page == "Perencana Investasi":
+        from finrl.decision.planner_view import show_planner
+        show_planner(config)
     elif page == "Data Market":
         show_data(config, source_kwargs)
     elif page == "Data Sources & Broker":

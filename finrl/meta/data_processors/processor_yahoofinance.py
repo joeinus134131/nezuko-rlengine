@@ -46,6 +46,21 @@ class YahooFinanceProcessor(BaseDataProcessor):
         super().__init__()
 
     @staticmethod
+    def _extract_bulk_ticker(data: pd.DataFrame, ticker: str) -> pd.DataFrame:
+        """Extract one symbol from either yfinance MultiIndex orientation."""
+        if data.empty:
+            return pd.DataFrame()
+        if not isinstance(data.columns, pd.MultiIndex):
+            return data.copy()
+        for level in range(data.columns.nlevels):
+            if ticker in data.columns.get_level_values(level):
+                frame = data.xs(ticker, axis=1, level=level, drop_level=True).copy()
+                while isinstance(frame.columns, pd.MultiIndex):
+                    frame.columns = frame.columns.droplevel(-1)
+                return frame
+        return pd.DataFrame()
+
+    @staticmethod
     def _download_chart_api(
         ticker: str,
         start: pd.Timestamp,
@@ -332,7 +347,41 @@ class YahooFinanceProcessor(BaseDataProcessor):
         chunk_size = timedelta(days=7 if self.time_interval == "1m" else 59)
         frames = []
         failures: dict[str, list[str]] = {}
+        downloaded: set[str] = set()
+
+        # Daily histories support a single threaded yfinance batch. For an IDX
+        # universe this replaces dozens of serial network round-trips. Missing
+        # symbols still flow through the resilient per-ticker fallback below.
+        if not is_intraday and len(ticker_list) > 1:
+            try:
+                bulk = yf.download(
+                    ticker_list,
+                    start=start_date,
+                    end=end_date + timedelta(days=1),
+                    interval=self.time_interval,
+                    proxy=proxy,
+                    auto_adjust=True,
+                    progress=False,
+                    threads=True,
+                    timeout=20,
+                    group_by="ticker",
+                )
+                for tic in ticker_list:
+                    ticker_frame = self._extract_bulk_ticker(bulk, tic)
+                    if ticker_frame.empty or "Close" not in ticker_frame.columns:
+                        continue
+                    ticker_frame = ticker_frame.dropna(subset=["Close"], how="all")
+                    if ticker_frame.empty:
+                        continue
+                    ticker_frame["tic"] = tic
+                    frames.append(ticker_frame)
+                    downloaded.add(tic)
+            except Exception as error:
+                logger.warning("Yahoo batch download gagal; beralih ke per ticker: %s", error)
+
         for tic in ticker_list:
+            if tic in downloaded:
+                continue
             current_tic_start_date = start_date
             while current_tic_start_date <= end_date:
                 request_end = (
@@ -444,34 +493,32 @@ class YahooFinanceProcessor(BaseDataProcessor):
             # For intraday or non-US markets, use the observed timestamps from the data
             times = sorted(pd.to_datetime(df["timestamp"]).dropna().unique())
 
-        # create a new dataframe with full timestamp series
-        new_df = pd.DataFrame()
+        # Reindex each ticker in vectorized form. The previous row-by-row `.loc`
+        # loop became quadratic for long histories and large IDX universes.
+        cleaned_frames: list[pd.DataFrame] = []
+        price_columns = ["open", "high", "low", "close"]
         for tic in tic_list:
-            tmp_df = pd.DataFrame(
-                columns=["open", "high", "low", "close", "volume"], index=times
-            )
-            tic_df = df[df.tic == tic]
-            for i in range(tic_df.shape[0]):
-                tmp_timestamp = tic_df.iloc[i]["timestamp"]
-                if self.time_interval == "1d":
-                    tmp_timestamp = pd.Timestamp(tmp_timestamp).to_datetime64()
-                elif tmp_timestamp.tzinfo is None:
-                    tmp_timestamp = tmp_timestamp.tz_localize(NY)
+            tic_df = df.loc[df.tic == tic, ["timestamp", *price_columns, "volume"]].copy()
+            tic_df["timestamp"] = pd.to_datetime(tic_df["timestamp"])
+            if self.time_interval != "1d":
+                if tic_df["timestamp"].dt.tz is None:
+                    tic_df["timestamp"] = tic_df["timestamp"].dt.tz_localize(NY)
                 else:
-                    tmp_timestamp = tmp_timestamp.tz_convert(NY)
-                tmp_df.loc[tmp_timestamp] = tic_df.iloc[i][
-                    ["open", "high", "low", "close", "volume"]
-                ]
-
-            tmp_df = self.fill_nan_with_previous(tmp_df)
-
-            # merge single ticker data to new DataFrame
+                    tic_df["timestamp"] = tic_df["timestamp"].dt.tz_convert(NY)
+            tic_df = tic_df.drop_duplicates("timestamp", keep="last").set_index("timestamp")
+            tmp_df = tic_df.reindex(times).apply(pd.to_numeric, errors="coerce")
+            missing_close = tmp_df["close"].isna()
+            filled_close = tmp_df["close"].ffill().bfill().fillna(0.0)
+            tmp_df.loc[missing_close, price_columns] = np.repeat(
+                filled_close.loc[missing_close].to_numpy()[:, None], len(price_columns), axis=1
+            )
+            tmp_df.loc[missing_close, "volume"] = 0.0
             tmp_df = tmp_df.astype(float)
             tmp_df["tic"] = tic
-            new_df = pd.concat([new_df, tmp_df])
+            cleaned_frames.append(tmp_df)
 
         # reset index and rename columns
-        new_df = new_df.reset_index()
+        new_df = pd.concat(cleaned_frames).reset_index()
         new_df = new_df.rename(columns={"index": "timestamp"})
 
         return new_df

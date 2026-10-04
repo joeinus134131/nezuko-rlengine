@@ -10,6 +10,7 @@ os.environ.setdefault("APP_SECRET_KEY", "test-only-key-please-override-in-prod-1
 
 from finrl.db import repositories as repo
 from finrl.db import bridge
+from finrl.db.database import _normalize_local_sslmode
 from finrl.db.crypto import decrypt_secret, encrypt_secret
 from finrl.db.models import Base
 
@@ -67,6 +68,16 @@ def test_experiment_create_and_list(session) -> None:
     assert repo.list_experiments(session)[0].name == "e1"
 
 
+def test_local_database_sslmode_falls_back_to_prefer() -> None:
+    url = "postgresql://user:pass@127.0.0.1:5432/db?sslmode=require"
+    assert "sslmode=prefer" in _normalize_local_sslmode(url)
+
+
+def test_remote_database_sslmode_is_preserved() -> None:
+    url = "postgresql://user:pass@db.example.com:5432/db?sslmode=require"
+    assert _normalize_local_sslmode(url) == url
+
+
 def test_config_write_does_not_hide_database_failure(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(bridge, "is_db_configured", lambda: True)
     monkeypatch.setattr(
@@ -80,7 +91,11 @@ def test_config_write_does_not_hide_database_failure(monkeypatch, tmp_path) -> N
     assert not (tmp_path / "telegram_monitor.json").exists()
 
 
-def test_user_count_fails_closed_when_database_is_unavailable(monkeypatch, tmp_path) -> None:
+def test_user_count_falls_back_to_file_when_database_is_unavailable(
+    monkeypatch, tmp_path
+) -> None:
+    # Kontrak baru: DB tidak reachable -> fallback ke file mirror agar login
+    # lokal tetap jalan. Deploy server tetap gagal loudly di migrate_db.
     monkeypatch.setattr(bridge, "is_db_configured", lambda: True)
     monkeypatch.setattr(
         bridge,
@@ -88,11 +103,10 @@ def test_user_count_fails_closed_when_database_is_unavailable(monkeypatch, tmp_p
         lambda: (_ for _ in ()).throw(RuntimeError("database unavailable")),
     )
 
-    with pytest.raises(RuntimeError, match="PostgreSQL tidak dapat diakses"):
-        bridge.user_count_bridge(tmp_path)
+    assert bridge.user_count_bridge(tmp_path) == 0
 
 
-def test_create_user_does_not_write_file_when_database_fails(monkeypatch, tmp_path) -> None:
+def test_create_user_falls_back_to_file_when_database_fails(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(bridge, "is_db_configured", lambda: True)
     monkeypatch.setattr(
         bridge,
@@ -100,9 +114,9 @@ def test_create_user_does_not_write_file_when_database_fails(monkeypatch, tmp_pa
         lambda: (_ for _ in ()).throw(RuntimeError("database unavailable")),
     )
 
-    with pytest.raises(RuntimeError, match="Gagal membuat akun administrator"):
-        bridge.create_user_bridge(tmp_path, "admin", "strong-pass-1")
-    assert not (tmp_path / "users.json").exists()
+    bridge.create_user_bridge(tmp_path, "admin", "strong-pass-1")
+    assert (tmp_path / "users.json").exists()
+    assert bridge.authenticate_bridge(tmp_path, "admin", "strong-pass-1")
 
 
 def test_resolve_docker_host(monkeypatch) -> None:
